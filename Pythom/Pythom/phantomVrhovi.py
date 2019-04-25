@@ -111,8 +111,8 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 		vrhiRobotov.append(najblizja[1])
 
 	#for v in vrhiRobotov:
-		cv.circle(slika, tuple(v), 2, (255, 255, 255), -1)
-	cv.imshow("test slika", slika)
+	#	cv.circle(slika, tuple(v), 2, (255, 255, 255), -1)
+	#cv.imshow("test slika", slika)
 
 	le = len(vrhiRobotov)
 	if le < 3:
