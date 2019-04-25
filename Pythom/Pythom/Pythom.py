@@ -68,12 +68,12 @@ while(cap.isOpened() and not koncajProgram):
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg)
 	if vrhovi is not None:
 
+		# Za elipso
 		ploscaCenter, (MA, ma), kot = ellipsa(vrhovi)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
-		#ploscaCenter = np.round(np.average(vrhovi, axis = 0)).astype(np.uint)
-		#cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15)
+		cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15)
 
 		# Za vrhove robotov
 		for v in vrhovi.astype(np.uint):
