@@ -1,54 +1,53 @@
 import cv2 as cv
 import numpy as np
 
-def vrniKroglo(slika, center, polmer):
+def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	""" slika - rabi sliko na kateri isce
-	center - kje naj isce
-	polmer - okrog centra kje naj isce
+	elipsa - kje naj isce
+	izpisujOpozorila - ali izpisuje opozorila v cmd
 	Vrne tocko kje se nahaja krogla """
 
 	slika = slika.copy()
-	slikaHsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
+	# maskiram da isce samo znotraj elipse
+	slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 
-	# Ko najdeš kroglo preveri ali je znotraj elipse tak da elipso pretvoriš v counters in potem pointPolygonTest
-	# Zakaj tukaj sploh pretvarjam v gray??
+	# maskiram po barvi zogice
+	slika = cv.bitwise_and(slika, slika, mask = np.where(
+		(slika[:, :, 0] >= 13) & (slika[:, :, 0] <= 50) &
+		(slika[:, :, 1] >= 22) & (slika[:, :, 1] <= 60) &
+		(slika[:, :, 2] >= 37) & (slika[:, :, 2] <= 70)
+		, 255, 0).astype(np.uint8))
 
+	# Odstrani majhne tocke
+	slika = cv.medianBlur(slika, 5)
 
-	gray = cv.cvtColor(slika, cv.COLOR_BGR2GRAY)
-	gray = cv.GaussianBlur(gray, (3, 3), 2)
-	_, gray = cv.threshold(gray, 70, 255, cv.THRESH_BINARY_INV)
-
-	# maskiram da isce samo okrog centra z radije
-	gray = cv.bitwise_and(gray, gray, mask = cv.circle(np.zeros(gray.shape, dtype = np.uint8), tuple(center), polmer, 255, -1))
+	# V crno belo
+	slika = cv.threshold(slika, 1, 255, cv.THRESH_BINARY)[1]
 	
-	# maskiram da isce samo tam ko je dost temno
-	gray = cv.bitwise_and(gray, gray, mask = np.where((slikaHsv[:, :, 1] <= 230) & (slikaHsv[:, :, 2] <= 50), 255, 0).astype(np.uint8))
-
-	#odstranitev sledi (zapiranje)
+	# Zapolni zogo (zapiranje)
 	kernel = np.ones((3, 3), np.uint8) 
-	gray = cv.dilate(gray, kernel)
-	gray = cv.erode(gray, kernel)
+	slika = cv.dilate(slika, kernel)
+	slika = cv.erode(slika, kernel)
 
-	#cv.imshow("gray", gray)
-
-	contours, hierarchy = cv.findContours(gray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)		
+	cv.imshow("testna", slika)
 	
-	if contours is not None:
-		krog = {"napaka": np.inf}
-		for cnt in contours:		
-			(x, y), radius = cv.minEnclosingCircle(cnt)
-			#cv.drawContours(slika, cnt, -1, (0, 0, 255))
-			centerKroga = np.array((int(x),int(y)))
-			if np.sqrt(np.sum((centerKroga - center) ** 2)) < polmer and radius >= 7 and radius <= 25:
-				#cv.circle(slika, tuple(centerKroga), int(radius), (255, 0, 0), 2)
-				area = cv.contourArea(cnt)
-				napaka = np.abs(area - np.pi * 16 ** 2)
-				if napaka < krog["napaka"]:
-					krog = {"center": tuple(centerKroga), "radij": int(radius), "napaka": napaka}
-		if krog["napaka"] != np.inf:
-			#cv.circle(slika, krog["center"], krog["radij"], (0, 255, 0), 1)
-			return krog["center"], krog["radij"]
+	
+	# Jajca
+	obroba = cv.findContours(slika.astype(np.float), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+	if obroba is None:
+		if izpisujOpozorila: print("Ne najdem robov")
+		return None
+
+	for o in obroba[0]:
+		povrsina = cv.contourArea(o)
+		if povrsina < 0 or povrsina > 9999999:
+			continue
+
+
+
+
+
 
 	return None, None
 

@@ -24,6 +24,7 @@ def onMouse(event, x, y, flags, param):
 	""" Se kliče ob dogodkih miske nad oknom slike """
 	global koncajProgram
 	koncajProgram = event == cv.EVENT_LBUTTONDBLCLK
+	print(slika[y, x])
 
 # Poslje preko omrezja do simulinka
 def send_vals(x, y, z):
@@ -79,6 +80,8 @@ while(cap.isOpened() and not koncajProgram):
 		for v in vrhovi.astype(np.uint):
 			cv.drawMarker(slika, tuple(v), (255, 255, 0), cv.MARKER_TILTED_CROSS, 15)
 			
+
+
 		## Dolocitev polmera		
 		#r = np.zeros((3))
 		#for i in range(3):
@@ -89,7 +92,7 @@ while(cap.isOpened() and not koncajProgram):
 		#cv.circle(slika, tuple(ploscaCenter), ploscaPolmer,(0, 255, 255), 2)
 
 		# Za kroglo
-		#kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, ploscaCenter, ploscaPolmer)
+		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 		#if kroglaTocka is not None:
 		#	cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 		#	#izracun premika plosce
