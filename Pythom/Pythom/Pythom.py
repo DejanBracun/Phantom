@@ -93,8 +93,8 @@ while(cap.isOpened() and not koncajProgram):
 
 		# Za kroglo
 		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
-		#if kroglaTocka is not None:
-		#	cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
+		if kroglaTocka is not None:
+			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 		#	#izracun premika plosce
 		#	pozicijaProcent = (kroglaTocka - ploscaCenter)/ploscaPolmer
 		#	send_vals(pozicijaProcent[0],-pozicijaProcent[1], 0)

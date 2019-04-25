@@ -85,7 +85,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 
 	sredinaSlike = np.flip(np.floor(np.array(maska.shape) / 2))
 
-	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
 	if obroba is None:
 		if izpisujOpozorila: print("Ne najdem robov")
