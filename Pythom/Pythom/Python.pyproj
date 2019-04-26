@@ -2,20 +2,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>8597c301-b039-4c72-b30b-49a17a8f397b</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
+    <ProjectGuid>adf9b6f6-8e96-4307-b43d-adedd56168bd</ProjectGuid>
+    <ProjectHome>
+    </ProjectHome>
     <StartupFile>Python.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>Python</Name>
-    <RootNamespace>Python</RootNamespace>
-    <IsWindowsApplication>False</IsWindowsApplication>
-    <PublishUrl>
-    </PublishUrl>
-    <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
+    <RootNamespace>Pythom</RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,22 +22,11 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="FPS.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="krogla.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="phantomVrhovi.py">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="FPS.py" />
+    <Compile Include="krogla.py" />
+    <Compile Include="phantomVrhovi.py" />
     <Compile Include="Python.py" />
-    <Compile Include="ShraniVideo.py">
-      <SubType>Code</SubType>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="To to list.txt" />
+    <Compile Include="ShraniVideo.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
