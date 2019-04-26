@@ -9,7 +9,9 @@ import phantomVrhovi
 from ShraniVideo import ShraniVideo
 import krogla
 
-def ellipsa(tocke):
+print("dela")
+
+def elipsa(tocke):
 	""" tocke je vektor iz treh tock za elipso """
 	c = np.average(tocke, axis = 0)
 	nove = list(tocke).copy()
@@ -70,7 +72,7 @@ while(cap.isOpened() and not koncajProgram):
 	if vrhovi is not None:
 
 		# Za elipso
-		ploscaCenter, (MA, ma), kot = ellipsa(vrhovi)
+		ploscaCenter, (MA, ma), kot = elipsa(vrhovi)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
