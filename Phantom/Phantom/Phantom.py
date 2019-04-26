@@ -9,7 +9,69 @@ import phantomVrhovi
 from ShraniVideo import ShraniVideo
 import krogla
 
-print("dela")
+#static double distanceBtwPoints(const cv::Point a, const cv::Point b)
+#{
+#    double xDiff = a.x - b.x;
+#    double yDiff = a.y - b.y;
+
+#    return std::sqrt((xDiff * xDiff) + (yDiff * yDiff));
+#}
+
+#static int findNearestPointIndex(const cv::Point pt, const vector<Point> points)
+#{
+#    int nearestpointindex = 0;
+#    double distance;
+#    double mindistance = 1e+9;
+
+#    for ( size_t i = 0; i < points.size(); i++)
+#    {
+#        distance = distanceBtwPoints(pt,points[i]);
+
+#        if( distance < mindistance )
+#        {
+#            mindistance =  distance;
+#            nearestpointindex = i;
+#        }
+#    }
+#    return nearestpointindex;
+#}
+
+
+def vrniNajblizjoTocko(tocka, obroba):
+	""" Vrne tocko, ki je na obrobi in je najblizja parametru tocka 
+	tocka - okrog katere tocke me zanima
+	obroba - na kateri obrobi iscem
+	"""
+	obroba = obroba[0]
+	index = 0
+	najboljsa = 1e+9
+	for i in range(obroba.shape[0]):
+		razdalja = np.linalg.norm(tocka - obroba[i][0])
+		if razdalja < najboljsa:
+			najboljsa = razdalja
+			index = i
+	return obroba[index][0]
+
+def relativnaPozicijaKrogle(krogla, elipsa):
+	""" Izracuna relativno pozicijo krogle na elipsi
+	krogla - tocka pozicija krogle
+	elipsa - elipsa plosce
+	"""
+	ploscaCenter, (MA, ma), kot = elipsa
+
+	vk = np.array(krogla) - np.array(ploscaCenter) + np.array((ma, MA))
+	maska = np.zeros((MA * 2, ma * 2), dtype = np.uint8)
+	maska = cv.ellipse(maska, (ma, MA), (MA, ma), kot, 0, 360, 255, -1)
+	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+	robnaTocka = vrniNajblizjoTocko(vk, obroba[0])
+
+	relativno = (vk - np.array((ma, MA))) / np.linalg.norm(robnaTocka - np.array((ma, MA)))
+
+	#cv.circle(maska, tuple(robnaTocka), 3, 0, -1)
+	#cv.circle(maska, tuple(vk.astype(np.int)), 3, 0, -1)
+	#maska = cv.drawContours(maska, obroba[0], -1, 128, -1)
+	#cv.imshow("test", maska)
+	return relativno
 
 def elipsa(tocke):
 	""" tocke je vektor iz treh tock za elipso """
@@ -67,6 +129,10 @@ while(cap.isOpened() and not koncajProgram):
 
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
+	
+	global testnaSlika
+	testnaSlika = slika.copy()
+
 
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg)
 	if vrhovi is not None:
@@ -97,9 +163,10 @@ while(cap.isOpened() and not koncajProgram):
 		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 		if kroglaTocka is not None:
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
-		#	#izracun premika plosce
-		#	pozicijaProcent = (kroglaTocka - ploscaCenter)/ploscaPolmer
-		#	send_vals(pozicijaProcent[0],-pozicijaProcent[1], 0)
+			# Izracun relativne pozicje krogle
+			#pozicijaProcent = (kroglaTocka - ploscaCenter) / ploscaPolmer
+			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
+			send_vals(pozicijaProcent[0], -pozicijaProcent[1], 0)
 
 		
 			
