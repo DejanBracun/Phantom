@@ -25,7 +25,16 @@
     <Compile Include="krogla.py" />
     <Compile Include="Phantom.py" />
     <Compile Include="phantomVrhovi.py" />
+    <Compile Include="RelativnaPozicija.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ShraniVideo.py" />
+    <Compile Include="Simulink.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="To to list.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
