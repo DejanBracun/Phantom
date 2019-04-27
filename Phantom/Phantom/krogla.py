@@ -44,8 +44,9 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 
 	for o in obroba[0]:
 		# Površina obrobe more vstrezat
+		""" Te meje bi lahko določil z razmerjem vrhov.. če so roboti dvignjeni so blizje kameri in zato je zogica vecja """
 		povrsina = cv.contourArea(o)
-		if povrsina < 300 or povrsina > 550:
+		if povrsina < 300 or povrsina > 600:
 			continue
 
 		# Če imam manj kot 5 točk ne morem določit elipse

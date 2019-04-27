@@ -1,28 +1,39 @@
 import cv2 as cv
 import numpy as np
+import operator
 
 def zdruziNajblizjeTocke(tocke, sredina):
 	""" Tocke, ki so skupaj zdruzi v tisto, ki je najblizje sredini """
 	while len(tocke) > 3:
 
+		""" To lahko optimiziram.. Ne rabim vedno razdalje na novo računat in da jih ne podvaja"""
 		# Izracuna vse razdalje med vsemi tockami
 		razdalje = []
 		for v1 in tocke:
 			for v2 in tocke:
 				if v1 is v2:
 					continue
-				razdalje.append(np.array((v1, v2, np.sum((v1 - v2) ** 2))))
+				razdalje.append({"t1": v1, "t2": v2, "razdalja": np.linalg.norm(v1 - v2)})
 
 		# Najde najblizji točki
-		najblizja = np.array((None, None, np.inf))		
+		najblizja = {"t1": None, "t2": None, "razdalja": np.inf}
 		for r in razdalje:
-			if r[2] < najblizja[2]:
+			if r["razdalja"] < najblizja["razdalja"]:
 				najblizja = r 
 		
+		""" Dodaj da če je najmanjsa razdalja med tockam recimo 70 neha brisat in vrne najblizje 3 tocke """
+		#if najblizja["razdalja"] > 70:
+		#	for t1 in razdalje:
+		#		for t2 in razdalje:
+		#			if t1
+
+		#	sort = sorted(razdalje, key = operator.itemgetter("razdalja"))
+		#	return sort[0:3]
+		
 		# Doloci katero bo izbrisal
-		r0 = np.sum((sredina - najblizja[0]) ** 2)
-		r1 = np.sum((sredina - najblizja[1]) ** 2)
-		brisi = najblizja[0] if r0 > r1 else najblizja[1]
+		r0 = np.linalg.norm(sredina - najblizja["t1"])
+		r1 = np.linalg.norm(sredina - najblizja["t2"])
+		brisi = najblizja["t1"] if r0 > r1 else najblizja["t2"]
 
 		# Izbrise
 		for i, t in enumerate(tocke):
@@ -38,8 +49,10 @@ def tvorijoTrikotnik(tocke):
 	v2 = np.sum((tocke[1] - tocke[2]) ** 2)
 	v3 = np.sum((tocke[2] - tocke[0]) ** 2)
 
-	std = np.std(np.array((v1, v2, v3)))
-	return std < 17000
+	v = np.array((v1, v2, v3))
+	std = np.std(v)
+	avg = np.average(v)
+	return std / avg < 0.3
 
 def najdiVrhe(slika, izpisujOpozorila = False):
 	""" Slika je slika na kateri isce
@@ -48,21 +61,23 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 
 	slika = slika.copy()
 	
+	""" Zgleda da bi bilo bolje to filtrirat v HSV """
 	# Filtrira barvo
 	maska = np.where(
 		(slika[:, :, 0] >= 0)	& (slika[:, :, 0] <= 45) & 
 		(slika[:, :, 1] >= 20)	& (slika[:, :, 1] <= 80) & 
-		(slika[:, :, 2] >= 100)	& (slika[:, :, 2] <= 160), 255, 0).astype(np.uint8)
+		(slika[:, :, 2] >= 95)	& (slika[:, :, 2] <= 160), 255, 0).astype(np.uint8)
 	maska = cv.medianBlur(maska, 5)
 
 	# Zapiranje
 	kernel = np.ones((11, 11), np.uint8)
 	maska = cv.dilate(maska, kernel)
 	maska = cv.erode(maska, kernel)
-	#cv.imshow("vrhovi maska", maska)
+	cv.imshow("vrhovi maska", maska)
 
 	# Za iskanje točk najbližje sredini
 	sredinaSlike = np.flip(np.floor(np.array(maska.shape) / 2))
+	#cv.circle(slika, tuple(sredinaSlike.astype(np.int)), 5, (255, 255, 0), -1)
 
 	# Najde obrobe
 	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
@@ -78,7 +93,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	for o in obroba[0]:
 		# Če obroba ni prave dimenzije
 		povrsina = cv.contourArea(o)
-		if povrsina < 80 or povrsina > 800:
+		if povrsina < 80 or povrsina > 1000:
 			continue
 
 		# Iz vsake obrobe najde tocko najblizje sredini slike
@@ -92,9 +107,9 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 		# Shrani najblizjo tocko vsake obrobe
 		vrhiRobotov.append(najblizja[1])
 
-	#for v in vrhiRobotov:
-	#	cv.circle(slika, tuple(v), 4, (255, 255, 255), -1)
-	#cv.imshow("vrhovi", slika)
+	for v in vrhiRobotov:
+		cv.circle(slika, tuple(v), 5, (255, 255, 255), -1)
+	cv.imshow("vrhovi", slika)
 
 	le = len(vrhiRobotov)
 	# Če ni našel treh vrhov
@@ -104,7 +119,11 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 
 	# Če je preveč vrhov
 	elif le > 3:
-		vrhiRobotov = zdruziNajblizjeTocke(vrhiRobotov, sredinaSlike)
+		vrhiRobotov = zdruziNajblizjeTocke(vrhiRobotov, sredinaSlike)	
+
+	for v in vrhiRobotov:
+		cv.circle(slika, tuple(v), 3, (255, 0, 255), -1)
+	cv.imshow("vrhovi", slika)
 
 	# Če so dokaj smiselno postavleni
 	if not tvorijoTrikotnik(vrhiRobotov):
