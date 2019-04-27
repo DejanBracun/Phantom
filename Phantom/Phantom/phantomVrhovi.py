@@ -1,29 +1,6 @@
 import cv2 as cv
 import numpy as np
 
-def findCorrespondingPoints(iPtsRef, iPtsMov):
-    """Poisci korespondence kot najblizje tocke"""
-    iPtsMov = np.array(iPtsMov)
-    iPtsRef = np.array(iPtsRef) 
-    
-    idxPair = -np.ones((iPtsRef.shape[0], 1), dtype = np.int32)
-    idxDist = np.ones((iPtsRef.shape[0], iPtsMov.shape[0]))
-    
-    for i in range(iPtsRef.shape[0]):
-        for j in range(iPtsMov.shape[0]):
-            idxDist[i, j] = np.sum((iPtsRef[i, :2] - iPtsMov[j, :2]) ** 2) # zgradis matriko razdalj med dvema pixloma
-    while not np.all(idxDist == np.inf):
-        i, j = np.where(idxDist == np.min(idxDist)) # kje je razdalja najmanjsa
-        idxPair[i[0]] = j[0] # vektor, vrednosti pomenjo s katerim parom se ujema
-        idxDist[i[0], :] = np.inf # izločiš druge pare
-        idxDist[:, j[0]] = np.inf
-        
-    idxValid, idxNotValid = np.where(idxPair >= 0)
-    idxValid = np.array(idxValid)
-    iPtsRef_t = iPtsRef[idxValid, :]
-    iPtsMov_t = iPtsMov[idxPair[idxValid].flatten(), :]
-    return iPtsRef_t, iPtsMov_t
-
 def zdruziNajblizjeTocke(tocke, sredina):
 	""" Tocke, ki so skupaj zdruzi v tisto, ki je najblizje sredini """
 	while len(tocke) > 3:
@@ -62,7 +39,7 @@ def tvorijoTrikotnik(tocke):
 	v3 = np.sum((tocke[2] - tocke[0]) ** 2)
 
 	std = np.std(np.array((v1, v2, v3)))
-	return std < 12000
+	return std < 17000
 
 def najdiVrhe(slika, izpisujOpozorila = False):
 	""" Slika je slika na kateri isce
@@ -82,21 +59,26 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	kernel = np.ones((11, 11), np.uint8)
 	maska = cv.dilate(maska, kernel)
 	maska = cv.erode(maska, kernel)
+	#cv.imshow("vrhovi maska", maska)
 
+	# Za iskanje točk najbližje sredini
 	sredinaSlike = np.flip(np.floor(np.array(maska.shape) / 2))
 
+	# Najde obrobe
 	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
+	# Ce ni nasel obrob
 	if obroba is None:
 		if izpisujOpozorila: print("Ne najdem robov")
 		return None
 
-	vrhiRobotov = [] # Najblizja tocka vsake obrobe sredini slike
-	for o in obroba[0]:
+	# Najblizja tocka vsake obrobe sredini slike
+	vrhiRobotov = [] 
 
+	for o in obroba[0]:
 		# Če obroba ni prave dimenzije
 		povrsina = cv.contourArea(o)
-		if povrsina < 80 or povrsina > 600:
+		if povrsina < 80 or povrsina > 800:
 			continue
 
 		# Iz vsake obrobe najde tocko najblizje sredini slike
@@ -111,19 +93,23 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 		vrhiRobotov.append(najblizja[1])
 
 	#for v in vrhiRobotov:
-	#	cv.circle(slika, tuple(v), 2, (255, 255, 255), -1)
-	#cv.imshow("test slika", slika)
+	#	cv.circle(slika, tuple(v), 4, (255, 255, 255), -1)
+	#cv.imshow("vrhovi", slika)
 
 	le = len(vrhiRobotov)
+	# Če ni našel treh vrhov
 	if le < 3:
 		if izpisujOpozorila: print("Nisem nasel treh tock")
 		return None
 
-	elif le > 1:
+	# Če je preveč vrhov
+	elif le > 3:
 		vrhiRobotov = zdruziNajblizjeTocke(vrhiRobotov, sredinaSlike)
 
+	# Če so dokaj smiselno postavleni
 	if not tvorijoTrikotnik(vrhiRobotov):
 		if izpisujOpozorila: print("Ne tvorijo trikotnika")
 		return None
 
+	# Vrne vrhove
 	return np.array(vrhiRobotov)

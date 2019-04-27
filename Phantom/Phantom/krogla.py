@@ -9,8 +9,6 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 
 	slika = slika.copy()
 
-	testnaSlika = slika.copy()
-
 	# Maskiram da isce samo znotraj elipse
 	slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 
@@ -33,40 +31,39 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	kernel = np.ones((3, 3), np.uint8) 
 	slika = cv.dilate(slika, kernel)
 	slika = cv.erode(slika, kernel)
-	
-	#slika = cv.GaussianBlur(slika, (3, 3), 5)
 
-	cv.imshow("maska", slika)
+	#cv.imshow("maska", slika)
 
-	# Jajca
+	# Najde obrobe
 	obroba = cv.findContours(slika, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 	
+	# Če ni našel obrob
 	if obroba is None:
 		if izpisujOpozorila: print("Ne najdem robov")
 		return None, None
 
 	for o in obroba[0]:
-		cv.drawContours(testnaSlika, o, -1, (255, 255, 255))
-
+		# Površina obrobe more vstrezat
 		povrsina = cv.contourArea(o)
-		if povrsina < 300 or povrsina > 450:
+		if povrsina < 300 or povrsina > 550:
 			continue
 
+		# Če imam manj kot 5 točk ne morem določit elipse
 		if o.shape[0] < 5:
 			continue
 
+		# Določim elipso na dane točke obrobe
 		tocka, (MA, ma), kot = cv.fitEllipse(o)
 		(MA, ma) = (MA / 2, ma / 2)
 		#cv.ellipse(testnaSlika, (int(tocka[0]), int(tocka[1])), (int(MA), int(ma)), int(kot), 0, 360, (255, 255, 255))
-		
-		cv.imshow("test", testnaSlika)
 
+		# Ali je približno krog
 		avg = np.average(np.array((MA, ma)))
 		if np.abs(MA - ma) > avg * 0.2:
 			continue
 
+		# Vrne zaokroženo
 		return (int(tocka[0]), int(tocka[1])), int(avg)
 
-	cv.imshow("test", testnaSlika)
 	return None, None
 
