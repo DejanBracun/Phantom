@@ -47,34 +47,3 @@ class FPS:
 			self.ZeljeniSPF = 1 / FPS
 		else:
 			self.ZeljeniSPF = None
-
-
-
-#from time import time as Cas
-
-#__Zacetek = Cas()
-#__Stevec = 0
-#__IntervalPosodobitve = 1
-#__ZadnjiFps = 0
-
-#def NastaviIntervalPosodobitve(IntervalPosodobitve = 1):
-#    """ Nastavi na koliko sekund naj izpisuje FPS """
-#    __IntervalPosodobitve = IntervalPosodobitve
-
-#def Klici(Izpisi = True, KliciFunkcijo = None):
-#    """ Klices vedno v glavni zanki """
-#    global __Zacetek, __Stevec, __ZadnjiFps
-#    __Stevec += 1
-#    Razlika = Cas() - __Zacetek
-#    if Razlika > __IntervalPosodobitve:
-#        __ZadnjiFps = __Stevec / Razlika
-#        __Stevec = 0
-#        __Zacetek = Cas()
-#        if Izpisi:
-#            print("FPS: %.2f" % __ZadnjiFps)
-#        if callable(KliciFunkcijo):
-#            KliciFunkcijo(__ZadnjiFps)
-    
-#def VrniFps():
-#    """ Vrne zadnji izracunani fps """
-#    return __ZadnjiFps

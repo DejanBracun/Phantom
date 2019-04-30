@@ -24,7 +24,9 @@ def onMouse(event, x, y, flags, param):
 	""" Se kliče ob dogodkih miske nad oknom slike """
 	global koncajProgram
 	koncajProgram = event == cv.EVENT_LBUTTONDBLCLK
-	print(slika[y, x])
+	b, g, r = slikaOrg[y, x]
+	h, s, v = cv.cvtColor(slikaOrg, cv.COLOR_BGR2HSV)[y, x]
+	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
 cap = cv.VideoCapture(0)
@@ -52,7 +54,7 @@ while(cap.isOpened() and not koncajProgram):
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
 
-	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg)
+	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
 
 		# Za elipso
@@ -88,8 +90,6 @@ while(cap.isOpened() and not koncajProgram):
 
 	# Za FPS
 	FPS.Klici(Izpisi = False)
-
-
 
 
 # Za posnet video
