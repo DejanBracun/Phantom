@@ -3,6 +3,12 @@ import numpy as np
 import operator
 from itertools import combinations
 
+# Ali rise maske, tocke, itd.?
+debug = False
+
+# Hrani zadnjo sredino plosce
+sredinaPrej = None
+
 def dolociPrimerneTocke(tocke, sredina):
 	""" Tocke, ki so skupaj zdruzi v tisto, ki je najblizje sredini """
 	
@@ -67,7 +73,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	# Filtrira barvo
 	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 	maska = cv.inRange(hsv, (7, 165, 90), (17, 255, 155))
-	cv.imshow("vrhovi maska1", maska)
+	if debug: cv.imshow("vrhovi maska1", maska)
 	
 	# Odstranim sum
 	maska = cv.medianBlur(maska, 5)	
@@ -76,11 +82,16 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	kernel = np.ones((5, 5), np.uint8)
 	maska = cv.dilate(maska, kernel, iterations = 3)
 	maska = cv.erode(maska, kernel, iterations = 3)
-	cv.imshow("vrhovi maska2", maska)
+	if debug: cv.imshow("vrhovi maska2", maska)
 
 	# Za iskanje tock najbližje sredini
-	sredinaSlike = np.flip(np.floor(np.array(maska.shape) / 2))
-	cv.circle(slika, tuple(sredinaSlike.astype(np.int)), 5, (255, 255, 0), -1)
+	global sredinaPrej
+	sredinaSlike = None
+	if sredinaPrej is None:
+		sredinaSlike = np.flip(np.floor(np.array(maska.shape) / 2))
+	else:
+		sredinaSlike = sredinaPrej
+	if debug: cv.circle(slika, tuple(sredinaSlike.astype(np.int)), 5, (255, 255, 0), -1)
 
 	# Najde obrobe
 	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
@@ -110,9 +121,9 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 		# Shrani najblizjo tocko vsake obrobe
 		vrhiRobotov.append(najblizja[1])
 
-	for v in vrhiRobotov:
-		cv.circle(slika, tuple(v), 5, (255, 255, 255), -1)
-	cv.imshow("vrhovi", slika)
+	if debug: 
+		for v in vrhiRobotov:
+			cv.circle(slika, tuple(v), 5, (255, 255, 255), -1)
 
 	le = len(vrhiRobotov)
 	# Ce ni našel treh vrhov
@@ -123,14 +134,18 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	# Ce najde vec kot 3 tocke poskusi dolociti prave
 	vrhiRobotov = dolociPrimerneTocke(vrhiRobotov, sredinaSlike)	
 
-	for v in vrhiRobotov:
-		cv.circle(slika, tuple(v), 3, (255, 0, 255), -1)
-	cv.imshow("vrhovi", slika)
+	if debug: 
+		for v in vrhiRobotov:
+			cv.circle(slika, tuple(v), 3, (255, 0, 255), -1)
+		cv.imshow("vrhovi", slika)
 
 	# Ce so dokaj smiselno postavleni
 	if not tvorijoTrikotnik(vrhiRobotov):
 		if izpisujOpozorila: print("Ne tvorijo trikotnika")
 		return None
+
+	# Shrani sredino plosce
+	sredinaPrej = np.average(vrhiRobotov, axis = 0)
 
 	# Vrne vrhove
 	return np.array(vrhiRobotov)

@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
 
+#
+debug = False
+
 def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	"""
 	slika - rabi sliko na kateri isce
@@ -11,7 +14,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 
 	slika = slika.copy()
 
-	brisi = slika.copy()
+	if debug: slikaDebug = slika.copy()
 
 	# Maskiram po plosci
 	slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
@@ -21,7 +24,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 
 	# Maskiram po barvi zogice
 	slika = cv.inRange(slika, (0, 0, 1), (180, 160, 100))
-	cv.imshow("krogla maska1", slika)
+	if debug: cv.imshow("krogla maska1", slika)
 
 	# Odstrani majhne tocke
 	slika = cv.medianBlur(slika, 3)
@@ -34,7 +37,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	# Odstrani majhne tocke
 	slika = cv.medianBlur(slika, 5)
 
-	cv.imshow("krogla maska2", slika)
+	if debug: cv.imshow("krogla maska2", slika)
 
 	# Najde obrobe
 	obroba = cv.findContours(slika, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
@@ -64,9 +67,9 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 		tocka, (MA, ma), kot = cv.fitEllipseDirect(o["o"])
 		(MA, ma) = (MA / 2, ma / 2)
 
-		cv.drawContours(brisi, o["o"], -1, (0, 100, 255))
-		cv.ellipse(brisi, (int(tocka[0]), int(tocka[1])), (int(MA), int(ma)), int(kot), 0, 360, (255, 255, 255))
-		cv.imshow("krogla slika", brisi)
+		if debug: cv.drawContours(slikaDebug, o["o"], -1, (0, 100, 255))
+		if debug: cv.ellipse(slikaDebug, (int(tocka[0]), int(tocka[1])), (int(MA), int(ma)), int(kot), 0, 360, (255, 255, 255))
+		if debug: cv.imshow("krogla slika", slikaDebug)
 
 		# Ali je približno krog
 		avg = np.average(np.array((MA, ma)))

@@ -8,6 +8,7 @@ from ShraniVideo import ShraniVideo
 import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
+import Trajektorija
 
 def elipsa(tocke):
 	""" tocke je vektor iz treh tock za elipso """
@@ -32,7 +33,7 @@ def onMouse(event, x, y, flags, param):
 cap = cv.VideoCapture(0)
 
 # Za posnet video
-snemaj = True
+snemaj = False
 if snemaj: video = ShraniVideo("Test video")
 
 # Za FPS

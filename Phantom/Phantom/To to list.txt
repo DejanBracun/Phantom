@@ -2,8 +2,8 @@
 
 èim boljš zaznavat žogico in obmoèje plošèe
 k je to narjen pa šele krivulja in premik centra
-pa jst bi še trajektorijo žogice risu (kar je enostavno), šaè kje se je premikala
+pa jst bi še trajektorijo žogice risu (kar je enostavno), paè kje se je premikala
 
+Vrhove gledam na sredino slike in ne na prejšnjo sredino plošèe
 
-Phantom vrhovi - zdruziNajblizjeTocke - Zraven pristej neko napako ki bo zaradi prevelikega ali premajhnega trikotnika
 

@@ -32,6 +32,9 @@
     <Compile Include="Simulink.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Trajektorija.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="To to list.txt" />
