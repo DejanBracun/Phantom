@@ -2,7 +2,8 @@ import cv2 as cv
 import numpy as np
 
 def vrniNajblizjoTocko(tocka, obroba):
-	""" Vrne tocko, ki je na obrobi in je najblizja parametru tocka 
+	"""
+	Vrne tocko, ki je na obrobi in je najblizja parametru tocka 
 	tocka - okrog katere tocke me zanima
 	obroba - na kateri obrobi iscem
 	"""
@@ -17,7 +18,8 @@ def vrniNajblizjoTocko(tocka, obroba):
 	return obroba[index][0]
 
 def relativnaPozicijaKrogle(krogla, elipsa):
-	""" Izracuna relativno pozicijo krogle na elipsi
+	"""
+	Izracuna relativno pozicijo krogle na elipsi
 	krogla - tocka pozicija krogle
 	elipsa - elipsa plosce
 	"""

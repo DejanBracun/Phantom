@@ -40,7 +40,7 @@ class FPS:
 		return self.ZadnjiFps
 
 	def NastaviZeljeniFPS(self, FPS):
-		""" Nastaviš kako hitro zeliš, da se zanka izvaja """
+		""" Nastavis kako hitro zelis, da se zanka izvaja """
 		if FPS is None:
 			self.ZeljeniSPF = None
 		elif FPS > 0:

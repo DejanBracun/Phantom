@@ -2,10 +2,12 @@ import cv2 as cv
 import numpy as np
 
 def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
-	""" slika - rabi sliko na kateri isce
+	"""
+	slika - rabi sliko na kateri isce
 	elipsa - kje naj isce
 	izpisujOpozorila - ali izpisuje opozorila v cmd
-	Vrne tocko kje se nahaja krogla """
+	Vrne tocko kje se nahaja krogla
+	"""
 
 	slika = slika.copy()
 

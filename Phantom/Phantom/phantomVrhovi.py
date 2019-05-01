@@ -75,7 +75,8 @@ def tvorijoTrikotnik(tocke):
 	return napakaTrikotnika(tocke) < 0.25
 
 def najdiVrhe(slika, izpisujOpozorila = False):
-	""" Slika je slika na kateri isce
+	"""
+	Slika je slika na kateri isce
 	Ce je izpisuj obvestila True bo v konzolo printal zakaj ni nasel vrhov
 	Vrne tocke vrhovov robotov ali None"""
 
