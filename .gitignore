@@ -101,6 +101,5 @@ venv.bak/
 /site
 
 # Dodal naj ne sledi tem videu
-# mypy
-.mypy_cache/
-/Phantom/Phantom/Test video0.avi
+#.mypy_cache/
+#/Phantom/Phantom/Test video0.avi

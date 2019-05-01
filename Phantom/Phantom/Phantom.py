@@ -32,7 +32,8 @@ def onMouse(event, x, y, flags, param):
 cap = cv.VideoCapture(0)
 
 # Za posnet video
-video = ShraniVideo("Test video")
+snemaj = True
+if snemaj: video = ShraniVideo("Test video")
 
 # Za FPS
 FPS = FPS()
@@ -83,7 +84,7 @@ while(cap.isOpened() and not koncajProgram):
 	cv.imshow("Slika", slika)
 
 	# Za posnet video
-	video.DodajFrame(slikaOrg)
+	if snemaj: video.DodajFrame(slika)
 
 	# Za cv.imshow() da vidis kaj dela
 	cv.waitKey(1)
@@ -93,6 +94,6 @@ while(cap.isOpened() and not koncajProgram):
 
 
 # Za posnet video
-video.Koncal()
+if snemaj: video.Koncal()
 
 cv.destroyAllWindows()
