@@ -9,16 +9,19 @@ import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
 import Trajektorija
+import CenterTrikotnika
 
 def elipsa(tocke):
 	"""
 	Tocke je vektor iz treh tock za elipso
 	Vrne parametre elipse
 	"""
-	c = np.average(tocke, axis = 0)
+	c = CenterTrikotnika.vrniCenter(tocke)
+
 	nove = list(tocke).copy()
 	for t in tocke:
 		nove.append(list(c - np.array(t) + c))
+		#cv.drawMarker(slika, tuple(np.array((c - np.array(t) + c), dtype = np.int)), (255, 200, 200), cv.MARKER_TILTED_CROSS, 15)
 	(x, y), (MA, ma), kot = cv.fitEllipse(np.array(nove).astype(np.int32))
 	return (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
 	
