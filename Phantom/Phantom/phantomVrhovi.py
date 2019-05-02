@@ -12,7 +12,7 @@ sredinaPrej = None
 def dolociPrimerneTocke(tocke, sredina):
 	""" Tocke, ki so skupaj zdruzi v tisto, ki je najblizje sredini """
 	
-	# Če ni vsaj treh tock
+	# Ce ni vsaj treh tock
 	if len(tocke) <= 3:
 		return tocke
 
@@ -66,7 +66,8 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	"""
 	Slika je slika na kateri isce
 	Ce je izpisuj obvestila True bo v konzolo printal zakaj ni nasel vrhov
-	Vrne tocke vrhovov robotov ali None"""
+	Vrne tocke vrhovov robotov ali None
+	"""
 
 	slika = slika.copy()
 	
@@ -84,7 +85,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	maska = cv.erode(maska, kernel, iterations = 3)
 	if debug: cv.imshow("vrhovi maska2", maska)
 
-	# Za iskanje tock najbližje sredini
+	# Za iskanje tock najblizje sredini
 	global sredinaPrej
 	sredinaSlike = None
 	if sredinaPrej is None:
@@ -126,7 +127,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 			cv.circle(slika, tuple(v), 5, (255, 255, 255), -1)
 
 	le = len(vrhiRobotov)
-	# Ce ni našel treh vrhov
+	# Ce ni nasel treh vrhov
 	if le < 3:
 		if izpisujOpozorila: print("Nisem nasel treh tock")
 		return None

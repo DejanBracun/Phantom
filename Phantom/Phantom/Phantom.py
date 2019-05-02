@@ -11,7 +11,10 @@ from RelativnaPozicija import relativnaPozicijaKrogle
 import Trajektorija
 
 def elipsa(tocke):
-	""" tocke je vektor iz treh tock za elipso """
+	"""
+	Tocke je vektor iz treh tock za elipso
+	Vrne parametre elipse
+	"""
 	c = np.average(tocke, axis = 0)
 	nove = list(tocke).copy()
 	for t in tocke:
@@ -22,11 +25,11 @@ def elipsa(tocke):
 # Ce je True konca glavno zanko
 koncajProgram = False
 def onMouse(event, x, y, flags, param):
-	""" Se kliče ob dogodkih miske nad oknom slike """
+	""" Se klice ob dogodkih miske nad oknom slike """
 	global koncajProgram
 	koncajProgram = event == cv.EVENT_LBUTTONDBLCLK
-	b, g, r = slikaOrg[y, x]
-	h, s, v = cv.cvtColor(slikaOrg, cv.COLOR_BGR2HSV)[y, x]
+	b, g, r = param[y, x]
+	h, s, v = cv.cvtColor(param, cv.COLOR_BGR2HSV)[y, x]
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
@@ -80,9 +83,9 @@ while(cap.isOpened() and not koncajProgram):
 			Simulink.poslji(pozicijaProcent[0], -pozicijaProcent[1], 0)
 
 	cv.putText(slika, "Dvojni klik, da zapres", (5, 20), 4, 0.5, (255, 255, 255))
-	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))	
-	cv.setMouseCallback("Slika", onMouse)
+	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
 	cv.imshow("Slika", slika)
+	cv.setMouseCallback("Slika", onMouse, slikaOrg)
 
 	# Za posnet video
 	if snemaj: video.DodajFrame(slika)

@@ -42,7 +42,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	# Najde obrobe
 	obroba = cv.findContours(slika, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 	
-	# Če ni našel obrob
+	# Ce ni nasel obrob
 	if obroba is None:
 		if izpisujOpozorila: print("Ne najdem robov")
 		return None, None
@@ -54,16 +54,16 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	obrobe = sorted(obrobe, key = lambda o: o["povrsina"], reverse = True)
 
 	for o in obrobe:
-		# Površina obrobe more vstrezat
+		# Povrsina obrobe more vstrezat
 		""" Te meje bi lahko določil z razmerjem vrhov.. če so roboti dvignjeni so blizje kameri in zato je zogica vecja """
 		if o["povrsina"] < 270 or o["povrsina"] > 970:
 			continue
 
-		# Če imam manj kot 5 točk ne morem določit elipse
+		# Ce imam manj kot 5 tock ne morem dolocit elipse
 		if o["o"].shape[0] < 5:
 			continue
 
-		# Določim elipso na dane točke obrobe
+		# Dolocim elipso na dane tocke obrobe
 		tocka, (MA, ma), kot = cv.fitEllipseDirect(o["o"])
 		(MA, ma) = (MA / 2, ma / 2)
 
@@ -71,12 +71,12 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 		if debug: cv.ellipse(slikaDebug, (int(tocka[0]), int(tocka[1])), (int(MA), int(ma)), int(kot), 0, 360, (255, 255, 255))
 		if debug: cv.imshow("krogla slika", slikaDebug)
 
-		# Ali je približno krog
+		# Ali je priblizno krog
 		avg = np.average(np.array((MA, ma)))
 		if np.abs(MA - ma) > avg * 0.25:
 			continue
 
-		# Vrne zaokroženo
+		# Vrne zaokrozeno
 		return (int(tocka[0]), int(tocka[1])), int(avg)
 
 	return None, None
