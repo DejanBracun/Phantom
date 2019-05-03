@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 
-#
+# Ali rise maske, tocke, itd.?
 debug = False
 
 def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
@@ -17,19 +17,21 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	if debug: slikaDebug = slika.copy()
 
 	# Maskiram po plosci
-	slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
+	#slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
+	maska = cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
+	slika = np.where(maska == (0, 0, 0), (255, 255, 255), slika).astype(np.uint8)
 
 	# Pretvorim v hsv prostor
 	slika = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
 	# Maskiram po barvi zogice
-	slika = cv.inRange(slika, (0, 0, 1), (180, 160, 100))
+	slika = cv.inRange(slika, (0, 0, 0), (180, 255, 90))
 	if debug: cv.imshow("krogla maska1", slika)
 
 	# Odstrani majhne tocke
 	slika = cv.medianBlur(slika, 3)
 
-	# Zapolni zogo (zapiranje)
+	# Zapolni zogo
 	kernel = np.ones((3, 3), np.uint8)
 	slika = cv.dilate(slika, kernel)
 	slika = cv.erode(slika, kernel)
@@ -73,7 +75,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 
 		# Ali je priblizno krog
 		avg = np.average(np.array((MA, ma)))
-		if np.abs(MA - ma) > avg * 0.25:
+		if np.abs(MA - ma) > avg * 0.3:
 			continue
 
 		# Vrne zaokrozeno

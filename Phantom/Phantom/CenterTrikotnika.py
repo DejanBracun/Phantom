@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from itertools import combinations
 
 """
 Source: https://github.com/lachibal2/triangle_centers
@@ -56,10 +57,49 @@ def lineFromSlope(slope, point):
     return (slope, ((slope * (-1 * point[0])) +  point[1]))
 
 
+# Stranico na pol in nato crto do ogljisca
+
 def vrniCenter(tocke):
-	point1 = tuple(tocke[0])
-	point2 = tuple(tocke[1])
-	point3 = tuple(tocke[2])
+	"""
+	Iz danih tock izracuna sredisce
+	"""
+
+
+	#tocke = np.array([[1, 2], [2, 6], [3, -4]])
+
+	# Gre cez vse kombinacije in doloci najbolj kriticni tocki..
+	# (premica y = k * k + n ima problem kadar sta tocki poravnani)
+	koti = []
+	kombinacije = list(combinations(tocke, 2))
+	for k in kombinacije:
+		v = k[0] - k[1]
+		kot = np.arctan(v[1] / v[0])
+		koti.append({"k": k, "kot": np.abs(kot)})
+	koti = sorted(koti, key = lambda v: v["kot"])
+	
+	# V point2 shrani tocko ki je najmanj kriticna
+	point2 = None
+	for t in tocke:
+		v = koti[0]["k"]
+		if not np.all(np.equal(t, v[0])) and not np.all(np.equal(t, v[1])):
+			point2 = t
+			break
+	
+	# V ostala dva pointa da drugi 2 tocki
+	s1 = koti[1]["k"]
+	s2 = koti[2]["k"]
+	point1 = s1[0] if not np.all(np.equal(point2, s1[0])) else s1[1]
+	point3 = s2[0] if not np.all(np.equal(point2, s2[0])) else s2[1]
+
+	point1 = tuple(point1)
+	point2 = tuple(point2)
+	point3 = tuple(point3)
+
+	#point1 = tuple(tocke[0])
+	#point2 = tuple(tocke[1])
+	#point3 = tuple(tocke[2])
+
+
 	mid1 = getMidpoint(point1, point2)
 	mid2 = getMidpoint(point2, point3)
 	line1 = getLine(point1, point2)
@@ -69,5 +109,5 @@ def vrniCenter(tocke):
 	perpbi1 = lineFromSlope(perp1, mid1)
 	perpbi2 = lineFromSlope(perp2, mid2)
 	circumcent = getIntersection(perpbi1, perpbi2)
-	return circumcent
+	return np.array(circumcent)
 

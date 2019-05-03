@@ -10,13 +10,21 @@ import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
 import Trajektorija
 import CenterTrikotnika
+import CenterTrikotnik2
+import CenterTrikotnik3
+import Trajektorija
 
 def elipsa(tocke):
 	"""
 	Tocke je vektor iz treh tock za elipso
 	Vrne parametre elipse
 	"""
-	c = CenterTrikotnika.vrniCenter(tocke)
+	#c = CenterTrikotnika.vrniCenter(tocke)
+	c1 = CenterTrikotnik2.VrniCenter(tocke)
+	#c33 = CenterTrikotnik3.VrniCenter(tocke)
+	c2 = np.average(tocke, axis = 0)
+	c = np.average(np.array([c1, c2]), axis = 0)
+
 
 	nove = list(tocke).copy()
 	for t in tocke:
@@ -84,6 +92,9 @@ while(cap.isOpened() and not koncajProgram):
 			# Za posiljanje na simulink
 			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
 			Simulink.poslji(pozicijaProcent[0], -pozicijaProcent[1], 0)
+
+		# Za trajektorijo
+		Trajektorija.NajdiTrajektorijo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 
 	cv.putText(slika, "Dvojni klik, da zapres", (5, 20), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
