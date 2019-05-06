@@ -14,23 +14,24 @@ import CenterTrikotnik2
 import CenterTrikotnik3
 import Trajektorija
 
-def elipsa(tocke):
+def elipsa(tocke, slika):
 	"""
 	Tocke je vektor iz treh tock za elipso
 	Vrne parametre elipse
 	"""
+	slika = slika.copy()
+
 	#c = CenterTrikotnika.vrniCenter(tocke)
 	c1 = CenterTrikotnik2.VrniCenter(tocke)
 	#c33 = CenterTrikotnik3.VrniCenter(tocke)
 	c2 = np.average(tocke, axis = 0)
 	c = np.average(np.array([c1, c2]), axis = 0)
 
-
-	nove = list(tocke).copy()
+	nove = list(tocke)
 	for t in tocke:
 		nove.append(list(c - np.array(t) + c))
 		#cv.drawMarker(slika, tuple(np.array((c - np.array(t) + c), dtype = np.int)), (255, 200, 200), cv.MARKER_TILTED_CROSS, 15)
-	(x, y), (MA, ma), kot = cv.fitEllipse(np.array(nove).astype(np.int32))
+	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove).astype(np.int32))
 	return (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
 	
 # Ce je True konca glavno zanko
@@ -74,7 +75,7 @@ while(cap.isOpened() and not koncajProgram):
 	if vrhovi is not None:
 
 		# Za elipso
-		ploscaCenter, (MA, ma), kot = elipsa(vrhovi)
+		ploscaCenter, (MA, ma), kot = elipsa(vrhovi, slikaOrg)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
