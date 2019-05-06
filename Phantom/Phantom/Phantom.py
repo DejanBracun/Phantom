@@ -12,7 +12,10 @@ import Trajektorija
 import CenterTrikotnika
 import CenterTrikotnik2
 import CenterTrikotnik3
-import Trajektorija
+from itertools import combinations
+
+
+
 
 def elipsa(tocke, slika):
 	"""
@@ -21,6 +24,8 @@ def elipsa(tocke, slika):
 	"""
 	slika = slika.copy()
 
+
+	""" Se se odlocam kaj s tem, verjetno brisem ven.. """
 	#c = CenterTrikotnika.vrniCenter(tocke)
 	c1 = CenterTrikotnik2.VrniCenter(tocke)
 	#c33 = CenterTrikotnik3.VrniCenter(tocke)
@@ -32,7 +37,28 @@ def elipsa(tocke, slika):
 		nove.append(list(c - np.array(t) + c))
 		#cv.drawMarker(slika, tuple(np.array((c - np.array(t) + c), dtype = np.int)), (255, 200, 200), cv.MARKER_TILTED_CROSS, 15)
 	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove).astype(np.int32))
-	return (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
+	E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
+
+	""" Tole je koda za natancno prileganje elipse ampak jo je treba optimizirat """
+	# region Prileganje
+	#maska = cv.ellipse(np.zeros(slika.shape[0: 2]), E1, E2, E3, 0, 360, 1, 30)
+	#""" Te parametre treba popravit """
+	#canny = cv.Canny(slika, 10, 50) * maska
+	
+	## Prileganje
+	#najboljsi = {"st": 0, "E1": E1, "E2": E2, "E3": E3}
+	#for kot_ in range(0, 180, 10):
+	#	for MA_ in range(int(E2[0]), int(E2[0] * 1.1), 2):
+	#		for ma_ in range(int(E2[1]), int(E2[1] * 1.1), 2):
+	#			for x_ in range(E1[0] - 10, E1[0] + 10, 2):
+	#				for y_ in range(E1[1] - 10, E1[1] + 10, 2):
+	#					st = np.sum(cv.ellipse(np.full(slika.shape[0: 2], -1, dtype = np.float), (x_, y_), (MA_, ma_), kot_, 0, 360, 255.) == canny)
+	#					if st > najboljsi["st"]:
+	#						najboljsi = {"st": st, "E1": (x_, y_), "E2": (MA_, ma_), "E3": kot_}
+
+	#return najboljsi["E1"], najboljsi["E2"], najboljsi["E3"]
+	# endregion
+	return E1, E2, E3
 	
 # Ce je True konca glavno zanko
 koncajProgram = False
@@ -58,14 +84,14 @@ FPS.NastaviZeljeniFPS(30)
 while(cap.isOpened() and not koncajProgram):
 
 	#region Za Keyboard
-	#try:  # used try so that if user pressed other than the given key error will not be shown
-	#	if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+	#try: # used try so that if user pressed other than the given key error will not be shown
+	#	if keyboard.is_pressed('q'): # if key 'q' is pressed 
 	#		print('You Pressed A Key!')
-	#		break  # finishing the loop
+	#		break # finishing the loop
 	#	else:
 	#		pass
 	#except:
-	#	break  # if user pressed a key other than the given key the loop will break
+	#	break # if user pressed a key other than the given key the loop will break
 	#endregion
 
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
@@ -110,7 +136,6 @@ while(cap.isOpened() and not koncajProgram):
 
 	# Za FPS
 	FPS.Klici(Izpisi = False)
-
 
 # Za posnet video
 if snemaj: video.Koncal()

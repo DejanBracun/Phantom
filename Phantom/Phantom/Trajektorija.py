@@ -176,7 +176,7 @@ def NajdiTrajektorijo(slika, elipsa):
 	""" Popravi parametre """
 	slika = cv.Canny(slika, 30, 300)
 
-	if debug: cv.imshow("trajektorija maska", slika)
+	#if debug: cv.imshow("trajektorija maska", slika)
 
 
 
