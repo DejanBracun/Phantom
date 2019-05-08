@@ -12,7 +12,34 @@ import Trajektorija
 import CenterTrikotnika
 import CenterTrikotnik2
 import CenterTrikotnik3
-from itertools import combinations
+
+
+
+
+
+
+import os
+from ctypes import *
+string = "C:\\Users\\Dejan\\Source\\Repos\\Phantom\\Phantom\\Debug\\CLib"
+try:
+	testlib = CDLL(string)
+	neki = 0
+except Exception as e:
+	print(e)
+
+try:
+	testlib = CDLL(string + ".dll")
+	neki = 0
+except Exception as e:
+	print(e)
+testlib.myprint()
+
+
+
+neki = 0
+
+
+
 
 
 
@@ -40,6 +67,14 @@ def elipsa(tocke, slika):
 	E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
 
 	""" Tole je koda za natancno prileganje elipse ampak jo je treba optimizirat """
+	""" 
+		obreži sliko
+		ni treba za vsako masko brisat in potem risat elipso ampak lahko brisem samo zadnjo elipso
+		Resolucija
+		Je treba it od 0 do 180 ali je 90 dost?
+		C++
+		Mutithread
+	"""
 	# region Prileganje
 	#maska = cv.ellipse(np.zeros(slika.shape[0: 2]), E1, E2, E3, 0, 360, 1, 30)
 	#""" Te parametre treba popravit """

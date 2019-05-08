@@ -4,4 +4,5 @@
 k je to narjen pa šele krivulja in premik centra
 pa jst bi še trajektorijo žogice risu (kar je enostavno), paè kje se je premikala
 
-
+Gui?
+https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-set

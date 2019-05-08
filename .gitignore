@@ -103,3 +103,4 @@ venv.bak/
 # Dodal naj ne sledi tem videu
 #.mypy_cache/
 #/Phantom/Phantom/Test video0.avi
+/Phantom/.vs/Phantom/v15/Browse.VC.opendb
