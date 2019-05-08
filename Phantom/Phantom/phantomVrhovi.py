@@ -4,7 +4,7 @@ import operator
 from itertools import combinations
 
 # Ali rise maske, tocke, itd.?
-debug = False
+debug = True
 
 # Hrani zadnjo sredino plosce
 sredinaPrej = None
@@ -106,6 +106,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	vrhiRobotov = [] 
 
 	for o in obroba[0]:
+
 		# Ce obroba ni prave dimenzije
 		povrsina = cv.contourArea(o)
 		if povrsina < 70 or povrsina > 1400:

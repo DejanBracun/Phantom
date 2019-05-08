@@ -5,8 +5,7 @@
     <ProjectGuid>0d22def8-e075-4375-8282-eca186452e3b</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>Phantom.py</StartupFile>
-    <SearchPath>
-    </SearchPath>
+    <SearchPath>..\Cython\build\lib.win32-3.7</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>Phantom</Name>
