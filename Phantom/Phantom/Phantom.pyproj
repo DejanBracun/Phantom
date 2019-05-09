@@ -20,15 +20,6 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="CenterTrikotnik2.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="CenterTrikotnika.py">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="CenterTrikotnik3.py">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="FPS.py" />
     <Compile Include="krogla.py" />
     <Compile Include="Phantom.py" />

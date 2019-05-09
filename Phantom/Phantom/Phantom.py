@@ -3,21 +3,17 @@ import cv2 as cv
 import numpy as np
 from FPS import FPS
 import phantomVrhovi
-#import keyboard
 from ShraniVideo import ShraniVideo
 import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
 import Trajektorija
-import CenterTrikotnika
-import CenterTrikotnik2
-import CenterTrikotnik3
+from threading import Thread
 
 
-import example_cython
-#e = example_cython.test(5)
-#print(e)
 
+
+neki = 0
 
 
 def elipsa(tocke, slika):
@@ -27,13 +23,8 @@ def elipsa(tocke, slika):
 	"""
 	slika = slika.copy()
 
-
-	""" Se se odlocam kaj s tem, verjetno brisem ven.. """
-	#c = CenterTrikotnika.vrniCenter(tocke)
-	c1 = CenterTrikotnik2.VrniCenter(tocke)
-	#c33 = CenterTrikotnik3.VrniCenter(tocke)
-	c2 = np.average(tocke, axis = 0)
-	c = np.average(np.array([c1, c2]), axis = 0)
+	# Priblizno center
+	c = np.average(tocke, axis = 0)
 
 	nove = list(tocke)
 	for t in tocke:
@@ -52,39 +43,39 @@ def elipsa(tocke, slika):
 		Mutithread
 	"""
 	# region Prileganje
-	maska = cv.ellipse(np.zeros(slika.shape[0: 2]), E1, E2, E3, 0, 360, 1, 30)
-	#""" Te parametre treba popravit """
-	canny = cv.Canny(slika, 10, 50) * maska
+	#maska = cv.ellipse(np.zeros(slika.shape[0: 2]), E1, E2, E3, 0, 360, 1, 30)
+	##""" Te parametre treba popravit """
+	#canny = cv.Canny(slika, 10, 50) * maska
 
 
-	import time
-	start = time.time()
+	#import time
+	#start = time.time()
 
-	# Prileganje 1
-	a = example_cython.vrniElipso(canny, E1[1] - 10, E1[1] + 10, E1[0] - 10, E1[0] + 10, int(E2[1]), int(E2[1] * 1.1), int(E2[0]), int(E2[0] * 1.1))
-	E1 = (a[0], a[1])
-	E2 = (a[2], a[3])
-	E3 = a[4]
+	## Prileganje 1
+	#a = example_cython.vrniElipso(canny, E1[1] - 10, E1[1] + 10, E1[0] - 10, E1[0] + 10, int(E2[1]), int(E2[1] * 1.1), int(E2[0]), int(E2[0] * 1.1))
+	#E1 = (a[0], a[1])
+	#E2 = (a[2], a[3])
+	#E3 = a[4]
 
-	t1 = time.time()
+	#t1 = time.time()
 
-	# Prileganje 2
-	najboljsi = {"st": 0, "E1": E1, "E2": E2, "E3": E3}
-	for kot_ in range(0, 90, 10):
-		for MA_ in range(int(E2[0]), int(E2[0] * 1.1), 2):
-			for ma_ in range(int(E2[1]), int(E2[1] * 1.1), 2):
-				for x_ in range(E1[0] - 10, E1[0] + 10, 2):
-					for y_ in range(E1[1] - 10, E1[1] + 10, 2):
-						st = np.sum(cv.ellipse(np.full(slika.shape[0: 2], -1, dtype = np.float), (x_, y_), (MA_, ma_), kot_, 0, 360, 255.) == canny)
-						if st > najboljsi["st"]:
-							najboljsi = {"st": st, "E1": (x_, y_), "E2": (MA_, ma_), "E3": kot_}
-							print(najboljsi)
+	## Prileganje 2
+	#najboljsi = {"st": 0, "E1": E1, "E2": E2, "E3": E3}
+	#for kot_ in range(0, 90, 10):
+	#	for MA_ in range(int(E2[0]), int(E2[0] * 1.1), 2):
+	#		for ma_ in range(int(E2[1]), int(E2[1] * 1.1), 2):
+	#			for x_ in range(E1[0] - 10, E1[0] + 10, 2):
+	#				for y_ in range(E1[1] - 10, E1[1] + 10, 2):
+	#					st = np.sum(cv.ellipse(np.full(slika.shape[0: 2], -1, dtype = np.float), (x_, y_), (MA_, ma_), kot_, 0, 360, 255.) == canny)
+	#					if st > najboljsi["st"]:
+	#						najboljsi = {"st": st, "E1": (x_, y_), "E2": (MA_, ma_), "E3": kot_}
+	#						print(najboljsi)
 
-	#return najboljsi["E1"], najboljsi["E2"], najboljsi["E3"]
+	##return najboljsi["E1"], najboljsi["E2"], najboljsi["E3"]
 
-	t2 = time.time()
-	print(f"prva = %d, druga = %d" % (t1 - start, t2 - t1))
-	neki = 0
+	#t2 = time.time()
+	#print(f"prva = %d, druga = %d" % (t1 - start, t2 - t1))
+	#neki = 0
 
 	# endregion
 	return E1, E2, E3
@@ -112,24 +103,10 @@ FPS.NastaviZeljeniFPS(30)
 
 while(cap.isOpened() and not koncajProgram):
 
-	#region Za Keyboard
-	#try: # used try so that if user pressed other than the given key error will not be shown
-	#	if keyboard.is_pressed('q'): # if key 'q' is pressed 
-	#		print('You Pressed A Key!')
-	#		break # finishing the loop
-	#	else:
-	#		pass
-	#except:
-	#	break # if user pressed a key other than the given key the loop will break
-	#endregion
-
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
 
-	# BRISI
-	vrhovi = np.array([[312, 370], [423,  66], [126,  45]])
-
-	#vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
+	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
 
 		# Za elipso
@@ -143,17 +120,17 @@ while(cap.isOpened() and not koncajProgram):
 		for v in vrhovi.astype(np.uint):
 			cv.drawMarker(slika, tuple(v), (255, 255, 0), cv.MARKER_TILTED_CROSS, 15)
 
-		## Za kroglo
-		#kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
-		#if kroglaTocka is not None:
-		#	cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
+		# Za kroglo
+		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
+		if kroglaTocka is not None:
+			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
-		#	# Za posiljanje na simulink
-		#	pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
-		#	Simulink.poslji(pozicijaProcent[0], -pozicijaProcent[1], 0)
+			# Za posiljanje na simulink
+			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
+			Simulink.poslji(pozicijaProcent[0], -pozicijaProcent[1], 0)
 
-		## Za trajektorijo
-		#Trajektorija.NajdiTrajektorijo(slikaOrg, [ploscaCenter, (MA, ma), kot])
+		# Za trajektorijo
+		Trajektorija.NajdiTrajektorijo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 
 	cv.putText(slika, "Dvojni klik, da zapres", (5, 20), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
