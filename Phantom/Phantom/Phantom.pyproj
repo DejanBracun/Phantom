@@ -44,6 +44,7 @@
     <Compile Include="Trajektorija.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="trajektorijaNaPlosci.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="To to list.txt" />
