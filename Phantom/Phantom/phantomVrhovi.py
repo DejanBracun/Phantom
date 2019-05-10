@@ -73,7 +73,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	
 	# Filtrira barvo
 	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
-	maska = cv.inRange(hsv, (7, 165, 90), (17, 255, 155))
+	maska = cv.inRange(hsv, (5, 140, 90), (17, 255, 170))
 	if debug: cv.imshow("vrhovi maska1", maska)
 	
 	# Odstranim sum
