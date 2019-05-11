@@ -13,8 +13,32 @@ import CenterTrikotnika
 import CenterTrikotnik2
 import CenterTrikotnik3
 from itertools import combinations
+from simple_pid import PID
 
+# region Zacasni sliderji za PID
+from tkinter import *
+P = 1
+I = 0
+D = 0.2
+pid_X = PID(P, I, D, setpoint=0)
+pid_Y = PID(P, I, D, setpoint=0)
+def show_values(arg):
+	global P, I, D
+	P = w1.get()
+	I = w2.get()
+	D = w3.get()
+	pid_X.tunings = (P, I, D)
+	pid_Y.tunings = (P, I, D)
 
+master = Tk()
+w1 = Scale(master, from_=1, to=5, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w1.pack()
+w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w2.pack()
+w3 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w3.pack()
+#Button(master, text='Show', command = show_values).pack()
+# endregion
 
 
 def elipsa(tocke, slika):
@@ -83,6 +107,9 @@ FPS.NastaviZeljeniFPS(30)
 
 while(cap.isOpened() and not koncajProgram):
 
+    # Brisi
+	master.update()
+
 	#region Za Keyboard
 	#try: # used try so that if user pressed other than the given key error will not be shown
 	#	if keyboard.is_pressed('q'): # if key 'q' is pressed 
@@ -118,7 +145,9 @@ while(cap.isOpened() and not koncajProgram):
 			
 			# Za posiljanje na simulink
 			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
-			Simulink.poslji(pozicijaProcent[0], -pozicijaProcent[1], 0)
+			u_x = pid_X(-pozicijaProcent[0])
+			u_y = pid_Y(pozicijaProcent[1])
+			Simulink.poslji(u_x, u_y, 0)
 
 		# Za trajektorijo
 		Trajektorija.NajdiTrajektorijo(slikaOrg, [ploscaCenter, (MA, ma), kot])
