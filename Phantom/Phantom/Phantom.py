@@ -14,6 +14,7 @@ import CenterTrikotnik2
 import CenterTrikotnik3
 from itertools import combinations
 from simple_pid import PID
+from trajektorijaNaPlosci import narisanaTrajektorija
 
 # region Zacasni sliderji za PID
 from tkinter import *
@@ -31,12 +32,14 @@ def show_values(arg):
 	pid_Y.tunings = (P, I, D)
 
 master = Tk()
-w1 = Scale(master, from_=1, to=5, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w1 = Scale(master, from_=0, to=5, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
-w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w1.set(1)
+w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w2.pack()
-w3 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=10000)
+w3 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w3.pack()
+w3.set(0.24)
 #Button(master, text='Show', command = show_values).pack()
 # endregion
 
@@ -149,10 +152,11 @@ while(cap.isOpened() and not koncajProgram):
 			u_y = pid_Y(pozicijaProcent[1])
 			Simulink.poslji(u_x, u_y, 0)
 
-		# Za trajektorijo
-		Trajektorija.NajdiTrajektorijo(slikaOrg, [ploscaCenter, (MA, ma), kot])
+		# Za trajektorijo (trenutno se izvaja ves cas)
+		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 
-	cv.putText(slika, "Dvojni klik, da zapres", (5, 20), 4, 0.5, (255, 255, 255))
+	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
+	cv.putText(slika, "klikni y za potrditev trajektorije", (10, 40), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
 	cv.imshow("Slika", slika)
 	cv.setMouseCallback("Slika", onMouse, slikaOrg)
