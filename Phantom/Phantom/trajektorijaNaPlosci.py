@@ -2,9 +2,10 @@ import cv2 as cv
 import numpy as np
 from skimage.morphology import skeletonize   #scikit-image module
 from math import sqrt
+import time
 
 #prikazovanje mask,...
-debug = False
+debug = True
 
 """ 
 Iskanje najblizje razdalje 
@@ -13,6 +14,37 @@ Funkcija rabi kot vhod seznam tock in zacetno tocko
 def get_ordered_list(points, x, y):
    points= sorted(points, key = lambda p: sqrt((p[0] - x)**2 + (p[1] - y)**2) )
    return points
+
+"""
+Iskanje indeksa najblizje razdalje
+"""
+def closest_node(node, nodes):
+    nodes = np.asarray(nodes)
+    deltas = nodes - node
+    dist_2 = np.einsum('ij,ij->i', deltas, deltas)
+    return np.argmin(dist_2)
+
+"""
+Iskanje zacetnih pikslov pri skeletu
+"""
+def skeleton_endpoints(skel):
+    # make out input nice, possibly necessary
+    skel = skel.copy()
+    skel[skel!=0] = 1
+    skel = np.uint8(skel)
+
+    # apply the convolution
+    kernel = np.uint8([[1,  1, 1],
+                       [1, 10, 1],
+                       [1,  1, 1]])
+    src_depth = -1
+    filtered = cv2.filter2D(skel,src_depth,kernel)
+
+    # now look through to find the value of 11
+    # this returns a mask of the endpoints, but if you just want the coordinates, you could simply return np.where(filtered==11)
+    out = np.zeros_like(skel)
+    out[np.where(filtered==11)] = 1
+    return out
 
 
 def narisanaTrajektorija(slika, elipsa, mode):
@@ -49,8 +81,16 @@ def narisanaTrajektorija(slika, elipsa, mode):
 
     maskBlurred = cv.GaussianBlur(mask, (7, 7), 0)
 
+    
+
+
+    
+
     if mode==2:
-        """HougCircles je zelo obcutljiv na velikost radija, bo treba kaj drugega"""
+        """
+        HougCircles je zelo obcutljiv na velikost radija, bo treba kaj drugega
+        Stestiraj zgornjo funkcijo in dodaj priblizno ujemanje z mocno erozijo
+        """
         circles = cv.HoughCircles(maskBlurred, cv.HOUGH_GRADIENT, 7, 5,param1=25,param2=75, minRadius=15, maxRadius=20)
         if circles is not None:
 	        # pretvorimo v int
@@ -79,6 +119,25 @@ def narisanaTrajektorija(slika, elipsa, mode):
 
         urejenSeznam = np.array( urejenSeznam ) 
 
+        """
+        Metoda 2
+        PREVERI OPTIMIZACIJO METODA1 VS METODA2
+        """
+        #seznam = np.array( [[4,4],[2,2],[3,3],[1,4],[3,6],[1,5],[4,5],[2,6],[4,6],[1,6] ] )
+        #urejenSeznam = []
+        #element = [1,1]  #zacetni piksel
+        #cas2 = time.time()
+        #for i in range(seznam.shape[0]):
+
+        #    indeks = closest_node(element, seznam)
+        #    element = seznam[indeks,:]
+        #    urejenSeznam.append( (element[0], element[1]) )
+        #    seznam = np.delete(seznam, indeks, axis=0) #pravilno brisanje
+        #print( ((time.time()-cas2)*1000) )
+        #urejenSeznam = np.array( urejenSeznam )
+
+
+
         urejenSeznam =urejenSeznam[::5]         #decimacija
 
         if debug==True:
@@ -86,7 +145,14 @@ def narisanaTrajektorija(slika, elipsa, mode):
             for i in urejenSeznam:
                 platno[i[0],i[1]] = 255
             cv.imshow("platno", platno)
-        
+    
+    erodedImg = cv.erode(mask, np.ones((17, 17), np.uint8))
+    obroba = cv.findContours(erodedImg, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+    for c in obroba[0]:
+        M = cv.moments(c)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        cv.circle(output, (cX,cY), 10, (255,255,255))
 
     """
     ISKANJE DALJIC

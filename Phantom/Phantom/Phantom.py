@@ -153,7 +153,7 @@ while(cap.isOpened() and not koncajProgram):
 			Simulink.poslji(u_x, u_y, 0)
 
 		# Za trajektorijo (trenutno se izvaja ves cas)
-		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+		narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, "klikni y za potrditev trajektorije", (10, 40), 4, 0.5, (255, 255, 255))
