@@ -98,7 +98,7 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 # Za posnet video
 snemaj = False

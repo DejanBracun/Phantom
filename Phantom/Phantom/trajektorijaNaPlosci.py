@@ -10,13 +10,14 @@ debug = True
 """ 
 Iskanje najblizje razdalje 
 Funkcija rabi kot vhod seznam tock in zacetno tocko
+kot izhod vrne urejen seznam
 """
 def get_ordered_list(points, x, y):
    points= sorted(points, key = lambda p: sqrt((p[0] - x)**2 + (p[1] - y)**2) )
    return points
 
 """
-Iskanje indeksa najblizje razdalje
+Iskanje indeksa najblizje razdalje med tocko in seznamom
 """
 def closest_node(node, nodes):
     nodes = np.asarray(nodes)
@@ -27,23 +28,20 @@ def closest_node(node, nodes):
 """
 Iskanje zacetnih pikslov pri skeletu
 """
-def skeleton_endpoints(skel):
-    # make out input nice, possibly necessary
+def skeleton_koncneTocke(skel):
+
     skel = skel.copy()
     skel[skel!=0] = 1
     skel = np.uint8(skel)
 
-    # apply the convolution
+    # jedro za zaznavanje sosedov
     kernel = np.uint8([[1,  1, 1],
                        [1, 10, 1],
                        [1,  1, 1]])
-    src_depth = -1
-    filtered = cv2.filter2D(skel,src_depth,kernel)
 
-    # now look through to find the value of 11
-    # this returns a mask of the endpoints, but if you just want the coordinates, you could simply return np.where(filtered==11)
-    out = np.zeros_like(skel)
-    out[np.where(filtered==11)] = 1
+    filtracija = cv.filter2D(skel, -1 ,kernel)
+    #tocka brez soseda 
+    out = (np.array(np.where(filtracija==11))).T
     return out
 
 
@@ -62,12 +60,14 @@ def narisanaTrajektorija(slika, elipsa, mode):
 	# Maskiram izven plosce
     slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 
+    #priprava slik in definicija mej v HSV, zapiranje
     blurred = cv.GaussianBlur(slika, (7, 7), 0)
     hsv = cv.cvtColor(blurred, cv.COLOR_BGR2HSV)
-    Gray = cv.cvtColor(blurred, cv.COLOR_BGR2GRAY)
+
     Lower = (90, 10, 100)
     Upper = (190, 250, 175)
 
+    #popravitev mej pri uint8 tipu (openCV)
     if hsv.dtype == 'uint8' :
         Lower = (90/2, 10, 100)
         Upper = (190/2, 250, 175)
@@ -87,72 +87,83 @@ def narisanaTrajektorija(slika, elipsa, mode):
     
 
     if mode==2:
-        """
-        HougCircles je zelo obcutljiv na velikost radija, bo treba kaj drugega
-        Stestiraj zgornjo funkcijo in dodaj priblizno ujemanje z mocno erozijo
-        """
-        circles = cv.HoughCircles(maskBlurred, cv.HOUGH_GRADIENT, 7, 5,param1=25,param2=75, minRadius=15, maxRadius=20)
-        if circles is not None:
-	        # pretvorimo v int
-            circles = np.round(circles[0, :]).astype("int")
- 
-	        # narisemo kroge
-            for (x, y, r) in circles:
-                cv.circle(output, (x, y), r, (0, 255, 0), 4)
-    
-        _, binarnaMaska = cv.threshold(mask, 127, 1, cv.THRESH_BINARY ) 
 
+        # Skeletizacija
+        _, binarnaMaska = cv.threshold(mask, 127, 1, cv.THRESH_BINARY ) 
         skelet = skeletonize(binarnaMaska).astype(np.uint8)
         output[np.where(skelet==1)] = (0,0,255)
-        
-        #dobimo seznam tock s pomocjo skeleta in uredimo tocke tako da tvorijo trajektorijo
-        seznam =  np.array( np.where(skelet==1) ).T  #seznam tock
-        urejenSeznam = []
-        #zacetni piksel!!
-        element = [1,1]                     
-        for i in range(seznam.shape[0] ):
-    
-            trenutniSeznam = get_ordered_list(seznam, element[0], element[1])
-            element = trenutniSeznam[0]
-            urejenSeznam.append( (element[0], element[1]) )
-            seznam = np.delete(trenutniSeznam, 0, axis=0) #pravilno brisanje
+        koncneTocke = skeleton_koncneTocke(skelet)
+        if debug == True: print(f"koncne tocke skeleta: \n{koncneTocke} \n")
 
-        urejenSeznam = np.array( urejenSeznam ) 
+        # dobimo priblizek zacetne tocke z erozijo
+        erodedImg = cv.erode(mask, np.ones((17, 17), np.uint8))
+        obroba = cv.findContours(erodedImg, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        obroba = sorted(obroba[0], key=lambda x: cv.contourArea(x))                       
+
+        #trenutno pregledamo vse rezultate, lahko bi le maximalni odziv
+        priblizekZacetnihTock =[]
+        for c in obroba:
+            M = cv.moments(c)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+            priblizekZacetnihTock.append( (cY, cX) )
+            #cv.circle(output, (cX,cY), 10, (255,255,255))
+
+        #vzamem prvo tocko
+        priblizekZacetnihTock = np.array(priblizekZacetnihTock[0])
+
+        #dobimo zacetno tocko tako da primerjam zac. tocke iz skeleta in priblizek tocke iz erozije
+        element = koncneTocke[closest_node(priblizekZacetnihTock, koncneTocke),:]
+        ZacetnaTocka = element
+        cv.circle(output, (ZacetnaTocka[1],ZacetnaTocka[0]), 5, (255,255,255))
+        if debug == True:
+            print(f'element: {element}')
+            print(f'elementPriblizno: {priblizekZacetnihTock}')
+
+        
+            
+        """"
+        Metoda 1 (priblizno 10x pocasneje kot Metoda 2)
+        """
+        #dobimo seznam tock s pomocjo skeleta in uredimo tocke tako da tvorijo trajektorijo
+        #seznam =  np.array( np.where(skelet==1) ).T  #seznam tock
+        #urejenSeznam = []
+        ##zacetni piksel!!
+        #element = [1,1] 
+        #cas = time.time() 
+        #for i in range(seznam.shape[0] ):
+    
+        #    trenutniSeznam = get_ordered_list(seznam, element[0], element[1])
+        #    element = trenutniSeznam[0]
+        #    urejenSeznam.append( (element[0], element[1]) )
+        #    seznam = np.delete(trenutniSeznam, 0, axis=0) #pravilno brisanje
+        
+        #print((time.time()-cas)*1000)
+        #urejenSeznam = np.array( urejenSeznam ) 
 
         """
         Metoda 2
-        PREVERI OPTIMIZACIJO METODA1 VS METODA2
         """
-        #seznam = np.array( [[4,4],[2,2],[3,3],[1,4],[3,6],[1,5],[4,5],[2,6],[4,6],[1,6] ] )
-        #urejenSeznam = []
-        #element = [1,1]  #zacetni piksel
-        #cas2 = time.time()
-        #for i in range(seznam.shape[0]):
+        seznam =  np.array( np.where(skelet==1) ).T  #seznam tock
+        urejenSeznam = []
+        #element kot zacetni piksel definiran zgoraj
+        for i in range(seznam.shape[0]):
 
-        #    indeks = closest_node(element, seznam)
-        #    element = seznam[indeks,:]
-        #    urejenSeznam.append( (element[0], element[1]) )
-        #    seznam = np.delete(seznam, indeks, axis=0) #pravilno brisanje
-        #print( ((time.time()-cas2)*1000) )
-        #urejenSeznam = np.array( urejenSeznam )
+            indeks = closest_node(element, seznam)
+            element = seznam[indeks,:]
+            urejenSeznam.append( (element[0], element[1]) )
+            seznam = np.delete(seznam, indeks, axis=0) #pravilno brisanje
 
-
-
+        urejenSeznam = np.array( urejenSeznam )
         urejenSeznam =urejenSeznam[::5]         #decimacija
+        if debug == True: print(f" urejen seznam: \n{urejenSeznam} \n")
 
         if debug==True:
             platno = np.zeros( (output.shape[0],output.shape[1]) )
             for i in urejenSeznam:
                 platno[i[0],i[1]] = 255
-            cv.imshow("platno", platno)
-    
-    erodedImg = cv.erode(mask, np.ones((17, 17), np.uint8))
-    obroba = cv.findContours(erodedImg, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-    for c in obroba[0]:
-        M = cv.moments(c)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        cv.circle(output, (cX,cY), 10, (255,255,255))
+
+        cv.imshow("platno", platno)
 
     """
     ISKANJE DALJIC
