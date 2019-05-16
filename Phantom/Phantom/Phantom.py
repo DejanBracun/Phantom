@@ -20,7 +20,7 @@ from trajektorijaNaPlosci import narisanaTrajektorija
 from tkinter import *
 P = 1
 I = 0
-D = 0.2
+D = 0.22
 pid_X = PID(P, I, D, setpoint=0)
 pid_Y = PID(P, I, D, setpoint=0)
 def show_values(arg):
@@ -34,12 +34,13 @@ def show_values(arg):
 master = Tk()
 w1 = Scale(master, from_=0, to=5, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
-w1.set(1)
+w1.set(P)
 w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w2.pack()
+w2.set(I)
 w3 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w3.pack()
-w3.set(0.24)
+w3.set(D)
 #Button(master, text='Show', command = show_values).pack()
 # endregion
 
@@ -98,7 +99,7 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 
 # Za posnet video
 snemaj = False
@@ -132,6 +133,7 @@ while(cap.isOpened() and not koncajProgram):
 
 		# Za elipso
 		ploscaCenter, (MA, ma), kot = elipsa(vrhovi, slikaOrg)
+		MA, ma = int(MA * 1.05), int(ma * 1.05)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
@@ -146,14 +148,23 @@ while(cap.isOpened() and not koncajProgram):
 		if kroglaTocka is not None:
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
-			# Za posiljanje na simulink
-			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot))
-			u_x = pid_X(-pozicijaProcent[0])
+			# Izracun normirane relativne pozicije krogle na plosci
+			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), [310, 88]) #, [310, 88]
+
+			# Nelinearizacija
+			pp = np.abs(pozicijaProcent)
+			ppa = 1.0 * pp ** 2 + 2.70616862252382e-16 * pp - 9.02056207507939e-17
+			pozicijaProcent = np.multiply( np.sign(pozicijaProcent), ppa )
+
+			# Pid regulator
+			u_x = pid_X(pozicijaProcent[0])
 			u_y = pid_Y(pozicijaProcent[1])
+
+			# Poslji na simulink
 			Simulink.poslji(u_x, u_y, 0)
 
 		# Za trajektorijo (trenutno se izvaja ves cas)
-		narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, "klikni y za potrditev trajektorije", (10, 40), 4, 0.5, (255, 255, 255))

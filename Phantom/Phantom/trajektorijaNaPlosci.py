@@ -5,7 +5,7 @@ from math import sqrt
 import time
 
 #prikazovanje mask,...
-debug = True
+debug = False
 
 """ 
 Iskanje najblizje razdalje 
@@ -104,8 +104,8 @@ def narisanaTrajektorija(slika, elipsa, mode):
         priblizekZacetnihTock =[]
         for c in obroba:
             M = cv.moments(c)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
+            cX = int(M["m10"] / ( M["m00"] + 1e-7 ) )
+            cY = int(M["m01"] / ( M["m00"] + 1e-7 ) )
             priblizekZacetnihTock.append( (cY, cX) )
             #cv.circle(output, (cX,cY), 10, (255,255,255))
 
