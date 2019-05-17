@@ -99,7 +99,7 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 # Za posnet video
 snemaj = False
@@ -149,11 +149,12 @@ while(cap.isOpened() and not koncajProgram):
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
 			# Izracun normirane relativne pozicije krogle na plosci
-			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), [310, 88]) #, [310, 88]
+			pozicijaProcent, referencnaTocka = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), None) #, [310, 88]
 
 			# Nelinearizacija
 			pp = np.abs(pozicijaProcent)
-			ppa = 1.0 * pp ** 2 + 2.70616862252382e-16 * pp - 9.02056207507939e-17
+			#ppa = 1.0 * pp ** 2 + 2.70616862252382e-16 * pp - 9.02056207507939e-17
+			ppa = -0.0005566703 + 0.4013623*pp + 2.085112*pp**2 - 1.490928*pp**3
 			pozicijaProcent = np.multiply( np.sign(pozicijaProcent), ppa )
 
 			# Pid regulator

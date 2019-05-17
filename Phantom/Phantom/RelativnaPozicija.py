@@ -80,24 +80,23 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 	normVkr = np.linalg.norm(vkr)
 	if normVkr:
 		vkrNorm = vkr / normVkr
-	else:
-		vkrNorm = vkr
 
-	# Najde robno tocko v smeri vkrNorm
-	i = 0
-	robnaTocka = vk
-	while maska[robnaTocka[1], robnaTocka[0]]:
-		i += 1
-		robnaTocka = np.round(vk + vkrNorm * i).astype(np.int32)
-	robnaTocka = np.round(vk + vkrNorm * i - 1).astype(np.int32)
+		# Najde robno tocko v smeri vkrNorm
+		i = 0
+		robnaTocka = vk
+		while maska[robnaTocka[1], robnaTocka[0]]:
+			i += 1
+			robnaTocka = np.round(vk + vkrNorm * i).astype(np.int32)
+		robnaTocka = np.round(vk + vkrNorm * i - 1).astype(np.int32)
 
-	if debug:
-		cv.circle(maska, tuple(vk), 2, 100, -1)
-		cv.circle(maska, tuple(robnaTocka), 5, 100)
-		#cv.line(maska, tuple(vk), tuple(referenca), 50)
-		cv.line(maska, tuple(vk), tuple(vrl), 50)
-		cv.imshow("Relativna poz", maska)
+		if debug:
+			cv.circle(maska, tuple(vk), 2, 100, -1)
+			cv.circle(maska, tuple(robnaTocka), 5, 100)
+			#cv.line(maska, tuple(vk), tuple(referenca), 50)
+			cv.line(maska, tuple(vk), tuple(vrl), 50)
+			cv.imshow("Relativna poz", maska)
 
-	# Izracuna relativno med vk in robno
-	relativno = (vk - vrl) / np.linalg.norm(robnaTocka - vrl)
-	return relativno * np.array([-1, 1])
+		# Izracuna relativno med vk in robno
+		relativno = (vk - vrl) / np.linalg.norm(robnaTocka - vrl)
+		return relativno * np.array([-1, 1]), referencaLokalna
+	return np.zeros(2), referencaLokalna
