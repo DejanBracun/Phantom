@@ -102,7 +102,7 @@ def onMouse(event, x, y, flags, param):
 cap = cv.VideoCapture(1)
 
 # Za posnet video
-snemaj = False
+snemaj = True
 if snemaj: video = ShraniVideo("Test video")
 
 # Za FPS
