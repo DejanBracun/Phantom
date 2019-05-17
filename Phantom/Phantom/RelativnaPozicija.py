@@ -64,7 +64,7 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 	referencaLokalna = referenca if referencaP is None else np.array(referencaP)
 
 	# Za koliko poveca sliko
-	obroba = 100
+	obroba = 10
 
 	# Maskiram ven samo plosco
 	d = np.max([MA, ma])

@@ -18,9 +18,9 @@ from trajektorijaNaPlosci import narisanaTrajektorija
 
 # region Zacasni sliderji za PID
 from tkinter import *
-P = 1
+P = 0.9
 I = 0
-D = 0.22
+D = 0.21
 pid_X = PID(P, I, D, setpoint=0)
 pid_Y = PID(P, I, D, setpoint=0)
 def show_values(arg):
@@ -107,7 +107,7 @@ if snemaj: video = ShraniVideo("Test video")
 
 # Za FPS
 FPS = FPS()
-FPS.NastaviZeljeniFPS(30)
+#FPS.NastaviZeljeniFPS(30)
 
 while(cap.isOpened() and not koncajProgram):
 

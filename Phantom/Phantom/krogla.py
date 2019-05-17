@@ -25,7 +25,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	slika = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
 	# Maskiram po barvi zogice
-	slika = cv.inRange(slika, (0, 0, 0), (180, 255, 90))
+	slika = cv.inRange(slika, (0, 0, 0), (180, 255, 110))
 	if debug: cv.imshow("krogla maska1", slika)
 
 	# Odstrani majhne tocke
@@ -74,8 +74,17 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 		if debug: cv.imshow("krogla slika", slikaDebug)
 
 		# Ali je priblizno krog
-		avg = np.average(np.array((MA, ma)))
-		if np.abs(MA - ma) > avg * 0.3:
+		avg = np.average((MA, ma))
+		vecji = np.max((MA, ma))
+		manjsi = np.max((MA, ma))
+		if manjsi  / vecji < 0.5:
+			continue
+
+		# Ali je primerno velika
+		razmerje = np.max(elipsa[1]) / np.max((MA, ma))
+		razmerjeRef = 30 / 2.3
+		toleranca = 0.2
+		if not (razmerje > razmerjeRef * (1 - toleranca) and razmerje < razmerjeRef * (1 + toleranca)):
 			continue
 
 		# Vrne zaokrozeno
