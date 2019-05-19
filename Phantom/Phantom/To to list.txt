@@ -1,3 +1,12 @@
 
 
+Kot v smeri ref.:
+		magnituda ref. tocka - pozicija žogice
+		hitrosti žogice v smeri ref. točke
+
+Kot v smeri tangenta na krožnici (s centrom v ref. in polmir (magnituda (ref. tocka - pozicija žogice))):
+		minus magnituda hitrosti v smeri tangente na krožnici (skalirana glede na to koliko prostora ima da se vstavi?)
+  
+Vektor:
+		nekak vsota dveh kotov?
 
