@@ -8,10 +8,6 @@ from ShraniVideo import ShraniVideo
 import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
-import Trajektorija
-import CenterTrikotnika
-import CenterTrikotnik2
-import CenterTrikotnik3
 from itertools import combinations
 from simple_pid import PID
 from trajektorijaNaPlosci import narisanaTrajektorija
@@ -45,6 +41,10 @@ w3.set(D)
 # endregion
 
 
+def kotMedVektorji(v1, v2):
+	return np.arctan2(v2[1], v2[0]) - np.arctan2(v1[1], v1[0])
+
+
 def elipsa(tocke, slika):
 	"""
 	Tocke je vektor iz treh tock za elipso
@@ -52,40 +52,68 @@ def elipsa(tocke, slika):
 	"""
 	slika = slika.copy()
 
-
-	""" Se se odlocam kaj s tem, verjetno brisem ven.. """
-	#c = CenterTrikotnika.vrniCenter(tocke)
-	c1 = CenterTrikotnik2.VrniCenter(tocke)
-	#c33 = CenterTrikotnik3.VrniCenter(tocke)
-	c2 = np.average(tocke, axis = 0)
-	c = np.average(np.array([c1, c2]), axis = 0)
+	c = np.average(tocke, axis = 0)
 
 	nove = list(tocke)
 	for t in tocke:
 		nove.append(list(c - np.array(t) + c))
 		#cv.drawMarker(slika, tuple(np.array((c - np.array(t) + c), dtype = np.int)), (255, 200, 200), cv.MARKER_TILTED_CROSS, 15)
 	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove).astype(np.int32))
-	E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
+	#MA, ma = int(MA * 1.05), int(ma * 1.05) # Da malo poveča elipso
+	#E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
+	E1, E2, E3 = np.array([x, y]), np.array([MA / 2, ma / 2]), np.array(kot)
 
-	""" Tole je koda za natancno prileganje elipse ampak jo je treba optimizirat """
-	# region Prileganje
-	#maska = cv.ellipse(np.zeros(slika.shape[0: 2]), E1, E2, E3, 0, 360, 1, 30)
-	#""" Te parametre treba popravit """
-	#canny = cv.Canny(slika, 10, 50) * maska
+	# region Boljše prileganje 2
+	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
+
+	nove = []
+	preveriNajvec = 20 # Koliko tock naj najvec preveri predno obupa
+	kotZacetni = kotMedVektorji(np.array([1, 0]), tocke[0] - E1)
+	kotPremika = 2 * np.pi / preveriNajvec
+
+	# Zmesa seznam (zmesa vrsti red po katerem bo iskal robove)
+	vsi = np.arange(preveriNajvec)
+	np.random.shuffle(vsi)
+
+	for i in vsi:
+		# Kot pod katerem trenutno iscem
+		kot = kotPremika * i + kotZacetni
+		# Enotski vektor v kateri smeri trenutno iscem
+		v = np.array([np.cos(kot), np.sin(kot)]) 
+
+		# Preveri linijo v katero kaze vektor v
+		for s in range(int(np.min(E2) * 0.9), int(np.max(E2) * 1.1), 1):
+			# Pixel, ki ga pregleduje
+			pix = np.round(v * s + E1).astype(np.uint)
+
+			# Ce je pixel preblizu tocke vrha odnehaj
+			for t in tocke:
+				if np.linalg.norm(pix - t) < 10:
+					break
+			else:
+
+				# Ce je pixel izven meja slike odnehaj
+				if pix[0] < 0 or pix[0] > hsv.shape[1] - 1 or pix[1] < 0 or pix[1] > hsv.shape[0] - 1:
+					break
+
+				#cv.drawMarker(slika, tuple(pix), (0, 100, 50), cv.MARKER_CROSS, 1)
+			
+				# Preveri ali je pixel dovolj temen
+				if hsv[pix[1], pix[0], 2] < 50:
+					#cv.drawMarker(slika, tuple(pix), (0, 255, 150), cv.MARKER_SQUARE, 10)
+					nove.append(pix)
+					break
+
+		if len(nove) > 8:
+			break
 	
-	## Prileganje
-	#najboljsi = {"st": 0, "E1": E1, "E2": E2, "E3": E3}
-	#for kot_ in range(0, 180, 10):
-	#	for MA_ in range(int(E2[0]), int(E2[0] * 1.1), 2):
-	#		for ma_ in range(int(E2[1]), int(E2[1] * 1.1), 2):
-	#			for x_ in range(E1[0] - 10, E1[0] + 10, 2):
-	#				for y_ in range(E1[1] - 10, E1[1] + 10, 2):
-	#					st = np.sum(cv.ellipse(np.full(slika.shape[0: 2], -1, dtype = np.float), (x_, y_), (MA_, ma_), kot_, 0, 360, 255.) == canny)
-	#					if st > najboljsi["st"]:
-	#						najboljsi = {"st": st, "E1": (x_, y_), "E2": (MA_, ma_), "E3": kot_}
-
-	#return najboljsi["E1"], najboljsi["E2"], najboljsi["E3"]
+	#cv.imshow("debuggggg", slika)
+	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove, dtype = np.int))
+	E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
 	# endregion
+
+
+	#E1, E2, E3 = (int(E1[0]), int(E1[1])), (int(E2[0]), int(E2[1])), int(E3)
 	return E1, E2, E3
 	
 # Ce je True konca glavno zanko
@@ -99,10 +127,10 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 
 # Za posnet video
-snemaj = True
+snemaj = False
 if snemaj: video = ShraniVideo("Test video")
 
 # Za FPS
@@ -111,19 +139,8 @@ FPS = FPS()
 
 while(cap.isOpened() and not koncajProgram):
 
-    # Brisi
+    # Zacasni sliderji za PID
 	master.update()
-
-	#region Za Keyboard
-	#try: # used try so that if user pressed other than the given key error will not be shown
-	#	if keyboard.is_pressed('q'): # if key 'q' is pressed 
-	#		print('You Pressed A Key!')
-	#		break # finishing the loop
-	#	else:
-	#		pass
-	#except:
-	#	break # if user pressed a key other than the given key the loop will break
-	#endregion
 
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
@@ -133,7 +150,6 @@ while(cap.isOpened() and not koncajProgram):
 
 		# Za elipso
 		ploscaCenter, (MA, ma), kot = elipsa(vrhovi, slikaOrg)
-		MA, ma = int(MA * 1.05), int(ma * 1.05)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
@@ -146,6 +162,7 @@ while(cap.isOpened() and not koncajProgram):
 		# Za kroglo
 		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 		if kroglaTocka is not None:
+			# Narise kroglo
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
 			# Izracun normirane relativne pozicije krogle na plosci
@@ -173,8 +190,11 @@ while(cap.isOpened() and not koncajProgram):
 	cv.imshow("Slika", slika)
 	cv.setMouseCallback("Slika", onMouse, slikaOrg)
 
+	# Brisi
+	print(FPS.VrniFps())
+
 	# Za posnet video
-	if snemaj: video.DodajFrame(slika)
+	if snemaj: video.DodajFrame(slikaOrg)
 
 	# Za cv.imshow() da vidis kaj dela
 	cv.waitKey(1)
