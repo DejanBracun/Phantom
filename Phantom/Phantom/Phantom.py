@@ -39,82 +39,6 @@ w3.pack()
 w3.set(D)
 #Button(master, text='Show', command = show_values).pack()
 # endregion
-
-
-def kotMedVektorji(v1, v2):
-	return np.arctan2(v2[1], v2[0]) - np.arctan2(v1[1], v1[0])
-
-
-def elipsa(tocke, slika):
-	"""
-	Tocke je vektor iz treh tock za elipso
-	Vrne parametre elipse
-	"""
-	slika = slika.copy()
-
-	c = np.average(tocke, axis = 0)
-
-	nove = list(tocke)
-	for t in tocke:
-		nove.append(list(c - np.array(t) + c))
-		#cv.drawMarker(slika, tuple(np.array((c - np.array(t) + c), dtype = np.int)), (255, 200, 200), cv.MARKER_TILTED_CROSS, 15)
-	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove).astype(np.int32))
-	#MA, ma = int(MA * 1.05), int(ma * 1.05) # Da malo poveča elipso
-	#E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
-	E1, E2, E3 = np.array([x, y]), np.array([MA / 2, ma / 2]), np.array(kot)
-
-	# region Boljše prileganje 2
-	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
-
-	nove = []
-	preveriNajvec = 20 # Koliko tock naj najvec preveri predno obupa
-	kotZacetni = kotMedVektorji(np.array([1, 0]), tocke[0] - E1)
-	kotPremika = 2 * np.pi / preveriNajvec
-
-	# Zmesa seznam (zmesa vrsti red po katerem bo iskal robove)
-	vsi = np.arange(preveriNajvec)
-	np.random.shuffle(vsi)
-
-	for i in vsi:
-		# Kot pod katerem trenutno iscem
-		kot = kotPremika * i + kotZacetni
-		# Enotski vektor v kateri smeri trenutno iscem
-		v = np.array([np.cos(kot), np.sin(kot)]) 
-
-		# Preveri linijo v katero kaze vektor v
-		for s in range(int(np.min(E2) * 0.9), int(np.max(E2) * 1.1), 1):
-			# Pixel, ki ga pregleduje
-			pix = np.round(v * s + E1).astype(np.uint)
-
-			# Ce je pixel preblizu tocke vrha odnehaj
-			for t in tocke:
-				if np.linalg.norm(pix - t) < 10:
-					break
-			else:
-
-				# Ce je pixel izven meja slike odnehaj
-				if pix[0] < 0 or pix[0] > hsv.shape[1] - 1 or pix[1] < 0 or pix[1] > hsv.shape[0] - 1:
-					break
-
-				#cv.drawMarker(slika, tuple(pix), (0, 100, 50), cv.MARKER_CROSS, 1)
-			
-				# Preveri ali je pixel dovolj temen
-				if hsv[pix[1], pix[0], 2] < 50:
-					#cv.drawMarker(slika, tuple(pix), (0, 255, 150), cv.MARKER_SQUARE, 10)
-					nove.append(pix)
-					break
-
-		if len(nove) > 8:
-			break
-	
-	#cv.imshow("debuggggg", slika)
-	(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove, dtype = np.int))
-	E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
-	# endregion
-
-
-	#E1, E2, E3 = (int(E1[0]), int(E1[1])), (int(E2[0]), int(E2[1])), int(E3)
-	return E1, E2, E3
 	
 # Ce je True konca glavno zanko
 koncajProgram = False
@@ -149,7 +73,7 @@ while(cap.isOpened() and not koncajProgram):
 	if vrhovi is not None:
 
 		# Za elipso
-		ploscaCenter, (MA, ma), kot = elipsa(vrhovi, slikaOrg)
+		ploscaCenter, (MA, ma), kot = phantomVrhovi.elipsa(vrhovi, slikaOrg)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
@@ -189,9 +113,6 @@ while(cap.isOpened() and not koncajProgram):
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
 	cv.imshow("Slika", slika)
 	cv.setMouseCallback("Slika", onMouse, slikaOrg)
-
-	# Brisi
-	print(FPS.VrniFps())
 
 	# Za posnet video
 	if snemaj: video.DodajFrame(slikaOrg)
