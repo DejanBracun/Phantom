@@ -25,7 +25,7 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	slika = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
 	# Maskiram po barvi zogice
-	slika = cv.inRange(slika, (0, 0, 0), (180, 255, 110))
+	slika = cv.inRange(slika, (0, 0, 0), (180, 90, 110))
 	if debug: cv.imshow("krogla maska1", slika)
 
 	# Odstrani majhne tocke

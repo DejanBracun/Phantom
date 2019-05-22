@@ -255,18 +255,23 @@ def narisanaTrajektorija(slika, elipsa, mode):
 
     if debug == True: cv.imshow('output', output)    
 
-    urejenSeznam.insert(0, ZacetnaTocka)
+    np.append(ZacetnaTocka, urejenSeznam)
     return urejenSeznam
 
 
 trenutniI = 0
+smer = 1
 def VrniNaslednjo():
-	global urejenSeznam, trenutniI
+	global urejenSeznam, trenutniI, smer
 
 	vrni = urejenSeznam[trenutniI, :]
-	trenutniI += 1
+	trenutniI += smer
 	if urejenSeznam.shape[0] - 1 < trenutniI:
+		trenutniI -= 1
+		smer = -1
+	elif trenutniI < 0 :
 		trenutniI = 0
+		smer = 1
 
 	return vrni
 

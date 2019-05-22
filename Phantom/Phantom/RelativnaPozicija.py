@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 
-debug = False
+debug = True
 
 # region stara koda
 #def vrniNajblizjoTocko(tocka, obroba):
@@ -50,7 +50,7 @@ debug = False
 
 
 
-def relativnaPozicijaKrogle(krogla, elipsa, referencaP):
+def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 	"""
 	Izracuna relativno pozicijo krogle na elipsi
 	krogla - tocka pozicija krogle

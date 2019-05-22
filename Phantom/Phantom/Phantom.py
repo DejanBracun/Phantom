@@ -38,7 +38,7 @@ def button_klik_traj():
 refTocka = None
 def button_klik_naslednjaToc():
 	global refTocka
-	refTocka = VrniNaslednjo()
+	refTocka = np.flip(VrniNaslednjo())
 
 master = Tk()
 w1 = Scale(master, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
@@ -123,7 +123,7 @@ while(cap.isOpened() and not koncajProgram):
 	slika = np.copy(slikaOrg)
 
 	if refTocka is not None:
-		cv.drawMarker(slika, (refTocka[1], refTocka[0]), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
+		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
 
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
@@ -145,6 +145,8 @@ while(cap.isOpened() and not koncajProgram):
 			# Narise kroglo
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
+			refTocka = [290, 130]
+
 			# Izracun normirane relativne pozicije krogle na plosci
 			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka) #, [365, 96]
 
