@@ -10,36 +10,89 @@ import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
 from itertools import combinations
 from simple_pid import PID
-from trajektorijaNaPlosci import narisanaTrajektorija
+from trajektorijaNaPlosci import narisanaTrajektorija, VrniNaslednjo
+import time
+
+# za PID
+alpha = 0.15
 
 # region Zacasni sliderji za PID
 from tkinter import *
-P = 0.9
+P = 18.0
 I = 0
-D = 0.21
-pid_X = PID(P, I, D, setpoint=0)
-pid_Y = PID(P, I, D, setpoint=0)
+D = 3.9
+#pid_X = PID(P, I, D, setpoint=0)
+#pid_Y = PID(P, I, D, setpoint=0)
 def show_values(arg):
-	global P, I, D
+	global P, I, D, alpha
 	P = w1.get()
 	I = w2.get()
 	D = w3.get()
-	pid_X.tunings = (P, I, D)
-	pid_Y.tunings = (P, I, D)
+	alpha = w4.get()
+	#pid_X.tunings = (P, I, D)
+	#pid_Y.tunings = (P, I, D)
+
+def button_klik_traj():
+	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+
+refTocka = None
+def button_klik_naslednjaToc():
+	global refTocka
+	refTocka = VrniNaslednjo()
 
 master = Tk()
-w1 = Scale(master, from_=0, to=5, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w1 = Scale(master, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
 w1.set(P)
 w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w2.pack()
 w2.set(I)
-w3 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w3 = Scale(master, from_=0, to=15, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w3.pack()
 w3.set(D)
-#Button(master, text='Show', command = show_values).pack()
+w4 = Scale(master, from_=0, to=1, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w4.pack()
+w4.set(alpha)
+w5 = Button(master, text = "Trajektorija", command = button_klik_traj).pack()
+w6 = Button(master, text = "Naslenja tocka", command = button_klik_naslednjaToc).pack()
+
 # endregion
+
+posPrejZoga = np.array((0,0))
+prejnagibRad = 0
+prejU = np.array((0,0))
+cas = -1
+error = 0
+
+def PID_regulator(posZoga, posRef):
 	
+	global error, cas, prejU, prejnagibRad, alpha, posPrejZoga, P, I, D
+	if cas == -1:
+		cas = time.time()
+
+	a = time.time() - cas
+	U = P*(posRef - posZoga) + I*(error) + D*((posPrejZoga - posZoga)/(a))
+	posPrejZoga = posZoga
+	U = U / 100
+	cas = time.time()
+
+	lingLang = np.linalg.norm(U)
+	if lingLang > 1:
+		nagib = 1
+	else:
+		nagib = lingLang
+
+	nagibRad = np.sin(nagib)
+	#nagibRad = 1.10134 + (-1.421521e-18 - 1.10134)/(1 + (nagibRad/0.4103627)**2.57016)
+	nagibRad = prejnagibRad*alpha + nagibRad*(1-alpha)
+	prejnagibRad = nagibRad
+	U = prejU*alpha + U*(1-alpha)
+	prejU = U
+
+	error += (posRef - posZoga)
+
+	return U, nagibRad
+
 # Ce je True konca glavno zanko
 koncajProgram = False
 def onMouse(event, x, y, flags, param):
@@ -51,7 +104,7 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 
 # Initializacija kamere
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(1)
 
 # Za posnet video
 snemaj = False
@@ -69,11 +122,14 @@ while(cap.isOpened() and not koncajProgram):
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
 
+	if refTocka is not None:
+		cv.drawMarker(slika, (refTocka[1], refTocka[0]), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
+
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
 
 		# Za elipso
-		ploscaCenter, (MA, ma), kot = phantomVrhovi.elipsa(vrhovi, slikaOrg)
+		ploscaCenter, (MA, ma), kot = phantomVrhovi.elipsa(vrhovi, slikaOrg, True)
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
@@ -90,20 +146,25 @@ while(cap.isOpened() and not koncajProgram):
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
 			# Izracun normirane relativne pozicije krogle na plosci
-			pozicijaProcent, referencnaTocka = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), None) #, [310, 88]
+			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka) #, [365, 96]
 
 			# Nelinearizacija
-			pp = np.abs(pozicijaProcent)
-			#ppa = 1.0 * pp ** 2 + 2.70616862252382e-16 * pp - 9.02056207507939e-17
-			ppa = -0.0005566703 + 0.4013623*pp + 2.085112*pp**2 - 1.490928*pp**3
-			pozicijaProcent = np.multiply( np.sign(pozicijaProcent), ppa )
+			#pp = np.abs(pozicijaProcent)
+			##ppa = 1.0 * pp ** 2 + 2.70616862252382e-16 * pp - 9.02056207507939e-17
+			#ppa = -0.0005566703 + 0.4013623*pp + 2.085112*pp**2 - 1.490928*pp**3
+			#pozicijaProcent = np.multiply( np.sign(pozicijaProcent), ppa )
 
 			# Pid regulator
-			u_x = pid_X(pozicijaProcent[0])
-			u_y = pid_Y(pozicijaProcent[1])
+			napaka, nagib = PID_regulator(pozicijaProcent, np.array([0, 0]))
+
+			""" PID modul """
+			#u_x = pid_X(pozicijaProcent[0])
+			#u_y = pid_Y(pozicijaProcent[1])
 
 			# Poslji na simulink
-			Simulink.poslji(u_x, u_y, 0)
+			#Simulink.poslji(u_x, u_y, 0)
+			Simulink.poslji(napaka[0], napaka[1], nagib)
+			#Simulink.poslji(0, 0, 1.23456)  #test centra
 
 		# Za trajektorijo (trenutno se izvaja ves cas)
 		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)

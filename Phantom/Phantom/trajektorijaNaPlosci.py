@@ -7,6 +7,9 @@ import time
 #prikazovanje mask,...
 debug = False
 
+# Seznam
+urejenSeznam = []
+
 """ 
 Iskanje najblizje razdalje 
 Funkcija rabi kot vhod seznam tock in zacetno tocko
@@ -69,7 +72,7 @@ def narisanaTrajektorija(slika, elipsa, mode):
 
     #popravitev mej pri uint8 tipu (openCV)
     if hsv.dtype == 'uint8' :
-        Lower = (90/2, 10, 100)
+        Lower = (90/2, 10, 80)
         Upper = (190/2, 250, 175)
 
     mask = cv.inRange(hsv, Lower, Upper)
@@ -128,6 +131,8 @@ def narisanaTrajektorija(slika, elipsa, mode):
         #dobimo seznam tock s pomocjo skeleta in uredimo tocke tako da tvorijo trajektorijo
         #seznam =  np.array( np.where(skelet==1) ).T  #seznam tock
         #urejenSeznam = []
+        
+
         ##zacetni piksel!!
         #element = [1,1] 
         #cas = time.time() 
@@ -145,6 +150,7 @@ def narisanaTrajektorija(slika, elipsa, mode):
         Metoda 2
         """
         seznam =  np.array( np.where(skelet==1) ).T  #seznam tock
+        global urejenSeznam
         urejenSeznam = []
         #element kot zacetni piksel definiran zgoraj
         for i in range(seznam.shape[0]):
@@ -163,7 +169,7 @@ def narisanaTrajektorija(slika, elipsa, mode):
             for i in urejenSeznam:
                 platno[i[0],i[1]] = 255
 
-        cv.imshow("platno", platno)
+            cv.imshow("platno", platno)
 
     """
     ISKANJE DALJIC
@@ -249,4 +255,19 @@ def narisanaTrajektorija(slika, elipsa, mode):
 
     if debug == True: cv.imshow('output', output)    
 
+    urejenSeznam.insert(0, ZacetnaTocka)
     return urejenSeznam
+
+
+trenutniI = 0
+def VrniNaslednjo():
+	global urejenSeznam, trenutniI
+
+	vrni = urejenSeznam[trenutniI, :]
+	trenutniI += 1
+	if urejenSeznam.shape[0] - 1 < trenutniI:
+		trenutniI = 0
+
+	return vrni
+
+

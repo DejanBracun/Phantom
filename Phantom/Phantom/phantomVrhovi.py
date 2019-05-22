@@ -73,7 +73,7 @@ def najdiVrhe(slika, izpisujOpozorila = False):
 	
 	# Filtrira barvo
 	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
-	maska = cv.inRange(hsv, (5, 140, 90), (17, 255, 170))
+	maska = cv.inRange(hsv, (5, 140, 90), (17, 255, 180))
 	if debug: cv.imshow("vrhovi maska1", maska)
 	
 	# Odstranim sum
@@ -158,7 +158,7 @@ def kotMedVektorji(v1, v2):
 	"""
 	return np.arctan2(v2[1], v2[0]) - np.arctan2(v1[1], v1[0])
 
-def elipsa(tocke, slika):
+def elipsa(tocke, slika, izpisujOpozorila = False):
 	"""
 	Tocke je vektor iz treh tock za elipso
 	Vrne parametre elipse
@@ -180,7 +180,7 @@ def elipsa(tocke, slika):
 	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
 	nove = []
-	preveriNajvec = 10 # Koliko tock naj najvec preveri predno obupa
+	preveriNajvec = 15 # Koliko tock naj najvec preveri predno obupa
 	kotZacetni = kotMedVektorji(np.array([1, 0]), tocke[0] - E1)
 	kotPremika = 2 * np.pi / preveriNajvec
 
@@ -218,11 +218,12 @@ def elipsa(tocke, slika):
 				break
 
 		# Ce imam vsaj toliko tock lahko neha z iskanjem
-		if len(nove) > 6:
+		if len(nove) > 8:
 			if debug: cv.imshow("Vrhovi prileganje", slika)
 			(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove, dtype = np.int))
 			E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
 			return E1, E2, E3
 
 	if debug: cv.imshow("Vrhovi prileganje", slika)
+	if izpisujOpozorila: print("Slabo prileganje")
 	return (int(E1[0]), int(E1[1])), (int(E2[0]), int(E2[1])), int(E3)
