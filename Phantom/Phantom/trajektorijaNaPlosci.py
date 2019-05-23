@@ -5,7 +5,7 @@ from math import sqrt
 import time
 
 #prikazovanje mask,...
-debug = False
+debug = True
 
 # Seznam
 urejenSeznam = []
@@ -99,7 +99,7 @@ def narisanaTrajektorija(slika, elipsa, mode):
         if debug == True: print(f"koncne tocke skeleta: \n{koncneTocke} \n")
 
         # dobimo priblizek zacetne tocke z erozijo
-        erodedImg = cv.erode(mask, np.ones((17, 17), np.uint8))
+        erodedImg = cv.erode(mask, np.ones((15, 15), np.uint8))
         obroba = cv.findContours(erodedImg, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
         obroba = sorted(obroba[0], key=lambda x: cv.contourArea(x))                       
 
@@ -161,7 +161,7 @@ def narisanaTrajektorija(slika, elipsa, mode):
             seznam = np.delete(seznam, indeks, axis=0) #pravilno brisanje
 
         urejenSeznam = np.array( urejenSeznam )
-        urejenSeznam =urejenSeznam[::5]         #decimacija
+        #urejenSeznam =urejenSeznam[::5]         #decimacija
         if debug == True: print(f" urejen seznam: \n{urejenSeznam} \n")
 
         if debug==True:
@@ -263,6 +263,9 @@ trenutniI = 0
 smer = 1
 def VrniNaslednjo():
 	global urejenSeznam, trenutniI, smer
+
+	if urejenSeznam == []:
+		return None
 
 	vrni = urejenSeznam[trenutniI, :]
 	trenutniI += smer

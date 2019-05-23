@@ -1,4 +1,5 @@
 import sys
+import os
 import cv2 as cv
 import numpy as np
 from FPS import FPS
@@ -46,6 +47,7 @@ def button_klik_poljubnoSredisce():
 	refTocka = zadnjaRefTockaZaPremik
 
 masterGui = Tk()
+masterGui.geometry('%dx%d+%d+%d' % (600, 400, 0, 0))
 w1 = Scale(masterGui, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
 w1.set(P)
@@ -62,10 +64,6 @@ w5 = Button(masterGui, text = "Trajektorija", command = button_klik_traj)
 w6 = Button(masterGui, text = "Naslednja tocka", command = button_klik_naslednjaToc)
 w7 = Button(masterGui, text = "Center", command = button_klik_center)
 w8 = Button(masterGui, text = "Poljubna tocka", command = button_klik_poljubnoSredisce)
-w5.place(relx=1, x=-2, y=2, anchor=NE)
-w6.place(relx=10, x=-2, y=2, anchor=NE)
-w7.place(relx=100, x=-2, y=2, anchor=NE)
-w8.place(relx=1000, x=-2, y=2, anchor=NE)
 w5.pack()
 w6.pack()
 w7.pack()
@@ -79,6 +77,10 @@ cas = -1
 error = np.array((0,0), dtype=np.float)
 prejError = np.array((0,0), dtype=np.float)
 prejPosZogaPiksli = np.array((0,0))
+
+cvWindowName = "Slika"
+cv.namedWindow(cvWindowName)
+cv.moveWindow(cvWindowName, 600, 0)
 
 def PID_regulator(posZoga, posRef, posZogaPiksli):
 	
@@ -99,7 +101,8 @@ def PID_regulator(posZoga, posRef, posZogaPiksli):
 	else:
 		nagib = lingLang
 
-	nagibRad = np.sin(nagib)
+	#nagibRad = np.sin(nagib)
+	nagibRad = nagib
 	#nagibRad = 1.10134 + (-1.421521e-18 - 1.10134)/(1 + (nagibRad/0.4103627)**2.57016)
 	nagibRad = prejnagibRad*alpha + nagibRad*(1-alpha)
 	prejnagibRad = nagibRad
@@ -158,6 +161,11 @@ while(cap.isOpened() and not koncajProgram):
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
 
+	# Za sprehod po trajektoriji
+	naslednjaIzTrajektorije = VrniNaslednjo()
+	if naslednjaIzTrajektorije is not None:
+		refTocka = np.flip(naslednjaIzTrajektorije)
+
 	if refTocka is not None:
 		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
 
@@ -206,8 +214,8 @@ while(cap.isOpened() and not koncajProgram):
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, "klikni y za potrditev trajektorije", (10, 40), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
-	cv.imshow("Slika", slika)
-	cv.setMouseCallback("Slika", onMouse, slikaOrg)
+	cv.imshow(cvWindowName, slika)
+	cv.setMouseCallback(cvWindowName, onMouse, slikaOrg)
 
 	# Za posnet video
 	if snemaj: video.DodajFrame(slikaOrg)

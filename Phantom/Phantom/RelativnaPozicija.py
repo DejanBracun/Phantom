@@ -3,52 +3,8 @@ import numpy as np
 
 debug = True
 
-# region stara koda
-#def vrniNajblizjoTocko(tocka, obroba):
-#	"""
-#	Vrne tocko, ki je na obrobi in je najblizja parametru tocka 
-#	tocka - okrog katere tocke me zanima
-#	obroba - na kateri obrobi iscem
-#	"""
-#	obroba = obroba[0]
-#	index = 0
-#	najboljsa = 1e+9
-#	for i in range(obroba.shape[0]):
-#		razdalja = np.linalg.norm(tocka - obroba[i][0])
-#		if razdalja < najboljsa:
-#			najboljsa = razdalja
-#			index = i
-#	return obroba[index][0]
-
-#def relativnaPozicijaKrogle(krogla, elipsa):
-#	"""
-#	Izracuna relativno pozicijo krogle na elipsi
-#	krogla - tocka pozicija krogle
-#	elipsa - elipsa plosce
-#	"""
-#	ploscaCenter, (MA, ma), kot = elipsa
-#	if referenca is None:
-#		referenca = ploscaCenter
-
-#	# Pozicija glede na plosco
-#	vk = np.array(krogla) - np.array(ploscaCenter) + np.array((ma, MA))
-#	# Maskiram ven samo plosco
-#	maska = np.zeros((MA * 2, ma * 2), dtype = np.uint8)
-#	maska = cv.ellipse(maska, (ma, MA), (MA, ma), kot, 0, 360, 255, -1)
-#	obroba = cv.findContours(maska, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
-#	robnaTocka = vrniNajblizjoTocko(vk, obroba[0])
-
-#	if debug:
-#		cv.circle(maska, tuple(vk), 2, 100, -1)
-#		cv.circle(maska, tuple(robnaTocka), 3, 100)
-#		cv.imshow("Relativna poz", maska)
-
-#	relativno = (vk - np.array((ma, MA))) / np.linalg.norm(robnaTocka - np.array((ma, MA)))
-
-#	return relativno
-# endregion
-
-
+cv.namedWindow("Relativna poz")
+cv.moveWindow("Relativna poz", 1240, 0)
 
 def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 	"""
