@@ -17,7 +17,6 @@ def vrniKroglo(slika, elipsa, izpisujOpozorila = False):
 	if debug: slikaDebug = slika.copy()
 
 	# Maskiram po plosci
-	#slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 	maska = cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 	slika = np.where(maska == (0, 0, 0), (255, 255, 255), slika).astype(np.uint8)
 

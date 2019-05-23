@@ -36,9 +36,12 @@ nacinVodenja = "center"
 # Za dolocitev tocke za premik centra
 zadnjaRefTockaZaPremik = None
 
+# Sezam tock za trajektorijo
+seznaTockTrajektorije = None
+
 def button_klik_traj():
-	global nacinVodenja
-	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+	global nacinVodenja, seznaTockTrajektorije
+	seznaTockTrajektorije = narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 	nacinVodenja = "trajektorija"
 
 def button_klik_center():
@@ -88,44 +91,47 @@ cv.moveWindow(cvWindowName, 600, 0)
 def PID_regulator(posZoga, posRef, posZogaPiksli):
 	
 	global prejError, error, cas, prejU, prejnagibRad, alpha, posPrejZoga, P, I, D, prejPosZogaPiksli
+	
+	#prvi vstop v regulator
 	if cas == -1:
 		cas = time.time() - 1/30
 	
 	posZogaPiksli = np.array(posZogaPiksli)
+	# preteceni cas od zadnjega klica regulatorja
 	a = time.time() - cas
 	U = P*(posRef - posZoga) + I*(error) + D*((posPrejZoga - posZoga)/(a))
 	posPrejZoga = posZoga
+	# skaliranje
 	U = U / 100
 	cas = time.time()
-
+	#omejitev maksimalnega odziva 
 	lingLang = np.linalg.norm(U)
 	if lingLang > 1:
 		nagib = 1
 	else:
 		nagib = lingLang
 
-	#nagibRad = np.sin(nagib)
-	nagibRad = nagib
+	nagibRad = np.sin(nagib)  
+	#nagibRad = nagib
 	#nagibRad = 1.10134 + (-1.421521e-18 - 1.10134)/(1 + (nagibRad/0.4103627)**2.57016)
 	nagibRad = prejnagibRad*alpha + nagibRad*(1-alpha)
 	prejnagibRad = nagibRad
 	U = prejU*alpha + U*(1-alpha)
 	prejU = U
 	
-
 	trenutniError = posRef - posZoga
-	#trenutniError = trenutniError*(1-0.2) + prejError*0.2
-	#if prejError[0] == trenutniError[0] and prejError[1] == trenutniError[1]:
-	#if np.isclose(prejError[0], trenutniError[0],  rtol=1e-02, atol=1e-02) and np.isclose(prejError[1], trenutniError[1],  rtol=1e-02, atol=1e-02):
-	#if np.allclose(prejError, trenutniError,  rtol=0, atol=0.01):
-	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 2 and np.linalg.norm(trenutniError) > 0.06:
+
+	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 2 and np.linalg.norm(trenutniError) > 0.04:
 		error += (posRef - posZoga)
-		#print(f"napaka je:{np.linalg.norm(trenutniError)}")
-		print(error)
 	else: 
-		#error = np.array((0,0), dtype=np.float)
 		error = np.array((0,0), dtype=np.float)
-		print("reset")
+
+	# Varovalo za pobeg vrednosti
+	for i in range(2):
+		if np.abs(error[i]) > 15.:
+			error[i] = np.sign(error[i]) * 15.0
+
+	#shranitev prejsnjih vrednosti
 	prejError = posRef - posZoga
 	prejPosZogaPiksli = posZogaPiksli
 	return U, nagibRad
@@ -169,10 +175,12 @@ while(cap.isOpened() and not koncajProgram):
 		naslednjaIzTrajektorije = VrniNaslednjo()
 		if naslednjaIzTrajektorije is not None:
 			refTocka = np.flip(naslednjaIzTrajektorije)
+		slika[seznaTockTrajektorije[:,0],seznaTockTrajektorije[:,1],:] = [25, 230, 214]
 
+	# Narisi premaknjeno ref tocko
 	if refTocka is not None:
 		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
-
+		
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
 
@@ -194,8 +202,6 @@ while(cap.isOpened() and not koncajProgram):
 			# Narise kroglo
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
-			#refTocka = [290, 130]
-			#refTocka = None
 			# Izracun normirane relativne pozicije krogle na plosci
 			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka, nacinVodenja == "trajektorija")
 
@@ -210,11 +216,8 @@ while(cap.isOpened() and not koncajProgram):
 
 			# Poslji na simulink
 			Simulink.poslji(napaka[0], napaka[1], nagib)
-			#Simulink.poslji(0, 0, 1.23456)  #test centra
 
-		# Za trajektorijo (trenutno se izvaja ves cas)
-		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
-
+	# Risi po sliki
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	if nacinVodenja == "trajektorija":
 		 cv.putText(slika, "Vodenje po trajektoriji", (10, 40), 4, 0.5, (255, 255, 255))
