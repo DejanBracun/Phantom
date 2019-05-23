@@ -3,34 +3,28 @@ import cv2 as cv
 import numpy as np
 from FPS import FPS
 import phantomVrhovi
-#import keyboard
 from ShraniVideo import ShraniVideo
 import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
 from itertools import combinations
-from simple_pid import PID
 from trajektorijaNaPlosci import narisanaTrajektorija, VrniNaslednjo
 import time
+from tkinter import *
 
 # za PID
 alpha = 0.15
-
-# region Zacasni sliderji za PID
-from tkinter import *
 P = 18.0
 I = 0
 D = 3.9
-#pid_X = PID(P, I, D, setpoint=0)
-#pid_Y = PID(P, I, D, setpoint=0)
+
+# region GUI
 def show_values(arg):
 	global P, I, D, alpha
 	P = w1.get()
 	I = w2.get()
 	D = w3.get()
 	alpha = w4.get()
-	#pid_X.tunings = (P, I, D)
-	#pid_Y.tunings = (P, I, D)
 
 def button_klik_traj():
 	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
@@ -40,22 +34,28 @@ def button_klik_naslednjaToc():
 	global refTocka
 	refTocka = np.flip(VrniNaslednjo())
 
-master = Tk()
-w1 = Scale(master, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+masterGui = Tk()
+w1 = Scale(masterGui, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
 w1.set(P)
-w2 = Scale(master, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w2 = Scale(masterGui, from_=0, to=5, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w2.pack()
 w2.set(I)
-w3 = Scale(master, from_=0, to=15, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w3 = Scale(masterGui, from_=0, to=15, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w3.pack()
 w3.set(D)
-w4 = Scale(master, from_=0, to=1, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
+w4 = Scale(masterGui, from_=0, to=1, resolution=0.01, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w4.pack()
 w4.set(alpha)
-w5 = Button(master, text = "Trajektorija", command = button_klik_traj).pack()
-w6 = Button(master, text = "Naslenja tocka", command = button_klik_naslednjaToc).pack()
-
+w5 = Button(masterGui, text = "Trajektorija", command = button_klik_traj)
+w6 = Button(masterGui, text = "Naslednja tocka", command = button_klik_naslednjaToc)
+w7 = Button(masterGui, text = "Center", command = None)
+w5.place(relx=1, x=-2, y=2, anchor=NE)
+w6.place(relx=10, x=-2, y=2, anchor=NE)
+w7.place(relx=100, x=-2, y=2, anchor=NE)
+w5.pack()
+w6.pack()
+w7.pack()
 # endregion
 
 posPrejZoga = np.array((0,0), dtype=np.float)
@@ -98,9 +98,9 @@ def PID_regulator(posZoga, posRef, posZogaPiksli):
 	#if prejError[0] == trenutniError[0] and prejError[1] == trenutniError[1]:
 	#if np.isclose(prejError[0], trenutniError[0],  rtol=1e-02, atol=1e-02) and np.isclose(prejError[1], trenutniError[1],  rtol=1e-02, atol=1e-02):
 	#if np.allclose(prejError, trenutniError,  rtol=0, atol=0.01):
-	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 3:
+	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 2 and np.linalg.norm(trenutniError) > 0.06:
 		error += (posRef - posZoga)
-
+		#print(f"napaka je:{np.linalg.norm(trenutniError)}")
 		print(error)
 	else: 
 		#error = np.array((0,0), dtype=np.float)
@@ -133,8 +133,8 @@ FPS = FPS()
 
 while(cap.isOpened() and not koncajProgram):
 
-    # Zacasni sliderji za PID
-	master.update()
+    # GUI
+	masterGui.update()
 
 	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
 	slika = np.copy(slikaOrg)
@@ -176,12 +176,7 @@ while(cap.isOpened() and not koncajProgram):
 			# Pid regulator
 			napaka, nagib = PID_regulator(pozicijaProcent, np.array([0, 0]), kroglaTocka)
 
-			""" PID modul """
-			#u_x = pid_X(pozicijaProcent[0])
-			#u_y = pid_Y(pozicijaProcent[1])
-
 			# Poslji na simulink
-			#Simulink.poslji(u_x, u_y, 0)
 			Simulink.poslji(napaka[0], napaka[1], nagib)
 			#Simulink.poslji(0, 0, 1.23456)  #test centra
 
