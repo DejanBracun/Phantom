@@ -6,7 +6,7 @@ debug = True
 cv.namedWindow("Relativna poz")
 cv.moveWindow("Relativna poz", 1240, 0)
 
-def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
+def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None, TrajektorijaMode = False):
 	"""
 	Izracuna relativno pozicijo krogle na elipsi
 	krogla - tocka pozicija krogle
@@ -25,11 +25,17 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 	# Maskiram ven samo plosco
 	d = np.max([MA, ma])
 	maska = np.zeros([(d + obroba) * 2, (d + obroba) * 2], dtype = np.uint8)
-	maska = cv.ellipse(maska, tuple(np.floor(np.flip(np.array(maska.shape) / 2)).astype(np.int32)), (MA, ma), kot, 0, 360, 255, -1)
+	cv.ellipse(maska, tuple(np.floor(np.flip(np.array(maska.shape) / 2)).astype(np.int32)), (MA, ma), kot, 0, 360, 255, -1)
 
 	# Pozicija glede na plosco
 	vk = krogla - referenca + (np.array(maska.shape) / 2).astype(np.int32)
 	vrl = referencaLokalna - referenca + (np.array(maska.shape) / 2).astype(np.int32)
+
+	# Maskiram notranji krog
+	if TrajektorijaMode:
+		maskaNotKroga = np.zeros([(d + obroba) * 2, (d + obroba) * 2], dtype = np.uint8)
+		cv.circle(maskaNotKroga, tuple(vrl), 70, 1, -1)
+		maska *= maskaNotKroga
 
 	# vektor krogla referenca
 	vkr = krogla - referencaLokalna
@@ -55,4 +61,5 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP = None):
 		# Izracuna relativno med vk in robno
 		relativno = (vk - vrl) / np.linalg.norm(robnaTocka - vrl)
 		return relativno * np.array([-1, 1]), referencaLokalna
+
 	return np.zeros(2), referencaLokalna

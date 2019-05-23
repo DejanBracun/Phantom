@@ -5,7 +5,7 @@ from math import sqrt
 import time
 
 #prikazovanje mask,...
-debug = True
+debug = False
 
 # Seznam
 urejenSeznam = []

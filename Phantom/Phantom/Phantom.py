@@ -19,8 +19,6 @@ P = 18.0
 I = 0
 D = 3.9
 
-zadnjaRefTockaZaPremik = None
-
 # region GUI
 def show_values(arg):
 	global P, I, D, alpha
@@ -29,22 +27,29 @@ def show_values(arg):
 	D = w3.get()
 	alpha = w4.get()
 
-def button_klik_traj():
-	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
-
-#globalno sredisce
+# Referencna tocka
 refTocka = None
-def button_klik_naslednjaToc():
-	global refTocka
-	refTocka = np.flip(VrniNaslednjo())
+
+# Ce si v nacinu za vodenje po trajektoriji
+nacinVodenja = "center"
+
+# Za dolocitev tocke za premik centra
+zadnjaRefTockaZaPremik = None
+
+def button_klik_traj():
+	global nacinVodenja
+	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+	nacinVodenja = "trajektorija"
 
 def button_klik_center():
-	global refTocka
+	global refTocka, nacinVodenja
 	refTocka = None
+	nacinVodenja = "center"
 
 def button_klik_poljubnoSredisce():
-	global refTocka
+	global refTocka, nacinVodenja
 	refTocka = zadnjaRefTockaZaPremik
+	nacinVodenja = "poljubnaTocka"
 
 masterGui = Tk()
 masterGui.geometry('%dx%d+%d+%d' % (600, 400, 0, 0))
@@ -61,11 +66,9 @@ w4 = Scale(masterGui, from_=0, to=1, resolution=0.01, command=show_values, orien
 w4.pack()
 w4.set(alpha)
 w5 = Button(masterGui, text = "Trajektorija", command = button_klik_traj)
-w6 = Button(masterGui, text = "Naslednja tocka", command = button_klik_naslednjaToc)
 w7 = Button(masterGui, text = "Center", command = button_klik_center)
 w8 = Button(masterGui, text = "Poljubna tocka", command = button_klik_poljubnoSredisce)
 w5.pack()
-w6.pack()
 w7.pack()
 w8.pack()
 # endregion
@@ -162,9 +165,10 @@ while(cap.isOpened() and not koncajProgram):
 	slika = np.copy(slikaOrg)
 
 	# Za sprehod po trajektoriji
-	naslednjaIzTrajektorije = VrniNaslednjo()
-	if naslednjaIzTrajektorije is not None:
-		refTocka = np.flip(naslednjaIzTrajektorije)
+	if nacinVodenja == "trajektorija":
+		naslednjaIzTrajektorije = VrniNaslednjo()
+		if naslednjaIzTrajektorije is not None:
+			refTocka = np.flip(naslednjaIzTrajektorije)
 
 	if refTocka is not None:
 		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
@@ -193,7 +197,7 @@ while(cap.isOpened() and not koncajProgram):
 			#refTocka = [290, 130]
 			#refTocka = None
 			# Izracun normirane relativne pozicije krogle na plosci
-			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka)
+			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka, nacinVodenja == "trajektorija")
 
 			# Nelinearizacija
 			#pp = np.abs(pozicijaProcent)
@@ -212,7 +216,12 @@ while(cap.isOpened() and not koncajProgram):
 		#narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
-	cv.putText(slika, "klikni y za potrditev trajektorije", (10, 40), 4, 0.5, (255, 255, 255))
+	if nacinVodenja == "trajektorija":
+		 cv.putText(slika, "Vodenje po trajektoriji", (10, 40), 4, 0.5, (255, 255, 255))
+	if nacinVodenja == "center":
+		 cv.putText(slika, "Vodenje v sredisce", (10, 40), 4, 0.5, (255, 255, 255))
+	if nacinVodenja == "poljubnaTocka":
+		 cv.putText(slika, "Vodenje v poljubno tocko", (10, 40), 4, 0.5, (255, 255, 255))
 	cv.putText(slika, f"FPS: %.2f" % FPS.VrniFps(), (5, slika.shape[0] - 15), 4, 0.5, (255, 255, 255))
 	cv.imshow(cvWindowName, slika)
 	cv.setMouseCallback(cvWindowName, onMouse, slikaOrg)
