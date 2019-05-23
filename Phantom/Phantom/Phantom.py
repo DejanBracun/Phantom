@@ -18,6 +18,8 @@ P = 18.0
 I = 0
 D = 3.9
 
+zadnjaRefTockaZaPremik = None
+
 # region GUI
 def show_values(arg):
 	global P, I, D, alpha
@@ -29,10 +31,19 @@ def show_values(arg):
 def button_klik_traj():
 	narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
 
+#globalno sredisce
 refTocka = None
 def button_klik_naslednjaToc():
 	global refTocka
 	refTocka = np.flip(VrniNaslednjo())
+
+def button_klik_center():
+	global refTocka
+	refTocka = None
+
+def button_klik_poljubnoSredisce():
+	global refTocka
+	refTocka = zadnjaRefTockaZaPremik
 
 masterGui = Tk()
 w1 = Scale(masterGui, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
@@ -49,13 +60,16 @@ w4.pack()
 w4.set(alpha)
 w5 = Button(masterGui, text = "Trajektorija", command = button_klik_traj)
 w6 = Button(masterGui, text = "Naslednja tocka", command = button_klik_naslednjaToc)
-w7 = Button(masterGui, text = "Center", command = None)
+w7 = Button(masterGui, text = "Center", command = button_klik_center)
+w8 = Button(masterGui, text = "Poljubna tocka", command = button_klik_poljubnoSredisce)
 w5.place(relx=1, x=-2, y=2, anchor=NE)
 w6.place(relx=10, x=-2, y=2, anchor=NE)
 w7.place(relx=100, x=-2, y=2, anchor=NE)
+w8.place(relx=1000, x=-2, y=2, anchor=NE)
 w5.pack()
 w6.pack()
 w7.pack()
+w8.pack()
 # endregion
 
 posPrejZoga = np.array((0,0), dtype=np.float)
@@ -114,14 +128,19 @@ def PID_regulator(posZoga, posRef, posZogaPiksli):
 koncajProgram = False
 def onMouse(event, x, y, flags, param):
 	""" Se klice ob dogodkih miske nad oknom slike """
-	global koncajProgram
+	global koncajProgram, zadnjaRefTockaZaPremik
 	koncajProgram = event == cv.EVENT_LBUTTONDBLCLK
 	b, g, r = param[y, x]
 	h, s, v = cv.cvtColor(param, cv.COLOR_BGR2HSV)[y, x]
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
+	if event == cv.EVENT_LBUTTONUP:
+		zadnjaRefTockaZaPremik = [x, y]
+
 
 # Initializacija kamere
 cap = cv.VideoCapture(1)
+#cap.set(cv.CAP_PROP_EXPOSURE, 0)
+cap.set(cv.CAP_PROP_AUTOFOCUS, 0)
 
 # Za posnet video
 snemaj = False
@@ -150,7 +169,8 @@ while(cap.isOpened() and not koncajProgram):
 		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Za center plosce
-		cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15)
+		if refTocka is None:
+			cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15)
 
 		# Za vrhove robotov
 		for v in vrhovi.astype(np.uint):
@@ -163,9 +183,9 @@ while(cap.isOpened() and not koncajProgram):
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
 			#refTocka = [290, 130]
-			refTocka = None
+			#refTocka = None
 			# Izracun normirane relativne pozicije krogle na plosci
-			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka) #, [365, 96]
+			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka)
 
 			# Nelinearizacija
 			#pp = np.abs(pozicijaProcent)

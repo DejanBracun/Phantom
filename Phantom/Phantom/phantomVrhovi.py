@@ -180,7 +180,7 @@ def elipsa(tocke, slika, izpisujOpozorila = False):
 	hsv = cv.cvtColor(slika, cv.COLOR_BGR2HSV)
 
 	nove = []
-	preveriNajvec = 15 # Koliko tock naj najvec preveri predno obupa
+	preveriNajvec = 20 # Koliko tock naj najvec preveri predno obupa
 	kotZacetni = kotMedVektorji(np.array([1, 0]), tocke[0] - E1)
 	kotPremika = 2 * np.pi / preveriNajvec
 
@@ -218,7 +218,7 @@ def elipsa(tocke, slika, izpisujOpozorila = False):
 				break
 
 		# Ce imam vsaj toliko tock lahko neha z iskanjem
-		if len(nove) > 8:
+		if len(nove) > 12:
 			if debug: cv.imshow("Vrhovi prileganje", slika)
 			(x, y), (MA, ma), kot = cv.fitEllipseDirect(np.array(nove, dtype = np.int))
 			E1, E2, E3 = (int(x), int(y)), (int(MA / 2), int(ma / 2)), int(kot)
