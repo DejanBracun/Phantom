@@ -58,18 +58,21 @@ w6 = Button(master, text = "Naslenja tocka", command = button_klik_naslednjaToc)
 
 # endregion
 
-posPrejZoga = np.array((0,0))
-prejnagibRad = 0
-prejU = np.array((0,0))
+posPrejZoga = np.array((0,0), dtype=np.float)
+prejnagibRad = 0.0
+prejU = np.array((0,0), dtype=np.float)
 cas = -1
-error = 0
+error = np.array((0,0), dtype=np.float)
+prejError = np.array((0,0), dtype=np.float)
+prejPosZogaPiksli = np.array((0,0))
 
-def PID_regulator(posZoga, posRef):
+def PID_regulator(posZoga, posRef, posZogaPiksli):
 	
-	global error, cas, prejU, prejnagibRad, alpha, posPrejZoga, P, I, D
+	global prejError, error, cas, prejU, prejnagibRad, alpha, posPrejZoga, P, I, D, prejPosZogaPiksli
 	if cas == -1:
-		cas = time.time()
-
+		cas = time.time() - 1/30
+	
+	posZogaPiksli = np.array(posZogaPiksli)
 	a = time.time() - cas
 	U = P*(posRef - posZoga) + I*(error) + D*((posPrejZoga - posZoga)/(a))
 	posPrejZoga = posZoga
@@ -88,9 +91,23 @@ def PID_regulator(posZoga, posRef):
 	prejnagibRad = nagibRad
 	U = prejU*alpha + U*(1-alpha)
 	prejU = U
+	
 
-	error += (posRef - posZoga)
+	trenutniError = posRef - posZoga
+	#trenutniError = trenutniError*(1-0.2) + prejError*0.2
+	#if prejError[0] == trenutniError[0] and prejError[1] == trenutniError[1]:
+	#if np.isclose(prejError[0], trenutniError[0],  rtol=1e-02, atol=1e-02) and np.isclose(prejError[1], trenutniError[1],  rtol=1e-02, atol=1e-02):
+	#if np.allclose(prejError, trenutniError,  rtol=0, atol=0.01):
+	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 3:
+		error += (posRef - posZoga)
 
+		print(error)
+	else: 
+		#error = np.array((0,0), dtype=np.float)
+		error = np.array((0,0), dtype=np.float)
+		print("reset")
+	prejError = posRef - posZoga
+	prejPosZogaPiksli = posZogaPiksli
 	return U, nagibRad
 
 # Ce je True konca glavno zanko
@@ -145,8 +162,8 @@ while(cap.isOpened() and not koncajProgram):
 			# Narise kroglo
 			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
 			
-			refTocka = [290, 130]
-
+			#refTocka = [290, 130]
+			refTocka = None
 			# Izracun normirane relativne pozicije krogle na plosci
 			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka) #, [365, 96]
 
@@ -157,7 +174,7 @@ while(cap.isOpened() and not koncajProgram):
 			#pozicijaProcent = np.multiply( np.sign(pozicijaProcent), ppa )
 
 			# Pid regulator
-			napaka, nagib = PID_regulator(pozicijaProcent, np.array([0, 0]))
+			napaka, nagib = PID_regulator(pozicijaProcent, np.array([0, 0]), kroglaTocka)
 
 			""" PID modul """
 			#u_x = pid_X(pozicijaProcent[0])
