@@ -14,7 +14,8 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False
 	Izracuna relativno pozicijo krogle na elipsi
 	krogla - tocka pozicija krogle
 	elipsa - elipsa plosce
-	referenca - v katero tocko se zelim premaknit
+	referencaP - v katero tocko se zelim premaknit
+	TrajektorijaMode - ce je True se bo s casom notranji krog zmanjseval
 	"""
 	global premerKroga
 
