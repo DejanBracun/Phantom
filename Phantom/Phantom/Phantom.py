@@ -13,6 +13,8 @@ from trajektorijaNaPlosci import narisanaTrajektorija, VrniNaslednjo
 import time
 from tkinter import *
 
+debug = False
+
 # za PID
 alpha = 0.15
 P = 18.0
@@ -50,8 +52,7 @@ def button_klik_center():
 	nacinVodenja = "center"
 
 def button_klik_poljubnoSredisce():
-	global refTocka, nacinVodenja
-	refTocka = zadnjaRefTockaZaPremik
+	global refTocka, nacinVodenja, zadnjaRefTockaZaPremik
 	nacinVodenja = "poljubnaTocka"
 
 masterGui = Tk()
@@ -87,7 +88,7 @@ Checkbutton(masterGui, text = "Risanje vrhov", variable = w13Var).pack()
 w14Var = BooleanVar()
 Checkbutton(masterGui, text = "Risanje elipse plosce", variable = w14Var).pack()
 w15Var = BooleanVar()
-Checkbutton(masterGui, text = "Risanje centera plosce", variable = w15Var).pack()
+Checkbutton(masterGui, text = "Risanje centra plosce", variable = w15Var).pack()
 # endregion
 
 posPrejZoga = np.array((0,0), dtype=np.float)
@@ -106,59 +107,57 @@ def PID_regulator(posZoga, posRef, posZogaPiksli):
 	
 	global prejError, error, cas, prejU, prejnagibRad, alpha, posPrejZoga, P, I, D, prejPosZogaPiksli
 	
-	#prvi vstop v regulator
+	# Prvi vstop v regulator
 	if cas == -1:
 		cas = time.time() - 1/30
 	
 	posZogaPiksli = np.array(posZogaPiksli)
-	# preteceni cas od zadnjega klica regulatorja
+	# Preteceni cas od zadnjega klica regulatorja
 	a = time.time() - cas
 	U = P*(posRef - posZoga) + I*(error) + D*((posPrejZoga - posZoga)/(a))
 	posPrejZoga = posZoga
-	# skaliranje
+	# Skaliranje
 	U = U / 100
 	cas = time.time()
-	#omejitev maksimalnega odziva 
+	# Omejitev maksimalnega odziva 
 	lingLang = np.linalg.norm(U)
 	if lingLang > 1:
 		nagib = 1
 	else:
 		nagib = lingLang
+	
+	# Nelinearizacija odziva
+	nagibRad = np.sin(nagib)
 
-	nagibRad = np.sin(nagib)  
-	#nagibRad = nagib
-	#nagibRad = 1.10134 + (-1.421521e-18 - 1.10134)/(1 + (nagibRad/0.4103627)**2.57016)
+	# Filtracija dinamike in shranitev prejsnjih vrednosti
 	nagibRad = prejnagibRad*alpha + nagibRad*(1-alpha)
 	prejnagibRad = nagibRad
 	U = prejU*alpha + U*(1-alpha)
 	prejU = U
 	
+	# Preverimo ali zogica stoji in blizino zeljene tocke
 	trenutniError = posRef - posZoga
-
-	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli) ) < 2 and np.linalg.norm(trenutniError) > 0.04:
+	if (np.linalg.norm(posZogaPiksli - prejPosZogaPiksli)) < 2 and np.linalg.norm(trenutniError) > 0.04:
 		error += (posRef - posZoga)
 	else: 
 		error = np.array((0,0), dtype=np.float)
 
 	# Varovalo za pobeg vrednosti
-	for i in range(2):
-		if np.abs(error[i]) > 15.:
-			error[i] = np.sign(error[i]) * 15.0
+	np.where(np.abs(error) > 15., np.sign(error) * 15., error)
 
-	#shranitev prejsnjih vrednosti
+	# Shranitev prejsnjih vrednosti
 	prejError = posRef - posZoga
 	prejPosZogaPiksli = posZogaPiksli
 	return U, nagibRad
 
-# Ce je True konca glavno zanko
-koncajProgram = False
 def onMouse(event, x, y, flags, param):
 	""" Se klice ob dogodkih miske nad oknom slike """
-	global koncajProgram, zadnjaRefTockaZaPremik
-	koncajProgram = event == cv.EVENT_LBUTTONDBLCLK
-	b, g, r = param[y, x]
-	h, s, v = cv.cvtColor(param, cv.COLOR_BGR2HSV)[y, x]
-	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
+	global zadnjaRefTockaZaPremik
+	if debug:
+		# Izpisuje parametre pixla pod misko
+		b, g, r = param[y, x]
+		h, s, v = cv.cvtColor(param, cv.COLOR_BGR2HSV)[y, x]
+		print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 	if event == cv.EVENT_LBUTTONUP:
 		zadnjaRefTockaZaPremik = [x, y]
 	return
@@ -166,7 +165,6 @@ def onMouse(event, x, y, flags, param):
 # Initializacija kamere
 cap = cv.VideoCapture(1)
 cap.set(cv.CAP_PROP_AUTOFOCUS, 0)
-#cap.set(cv.CAP_PROP_EXPOSURE, 0)
 
 # Za posnet video
 snemaj = False
@@ -180,7 +178,7 @@ FPS = FPS()
 seznamTock = []
 stTock = 10
 
-while(cap.isOpened() and not koncajProgram):
+while(cap.isOpened()):
 
     # GUI
 	try:
@@ -204,9 +202,11 @@ while(cap.isOpened() and not koncajProgram):
 		if w10Var.get():
 			slika[seznaTockTrajektorije[:,0],seznaTockTrajektorije[:,1],:] = [25, 230, 214]
 
-	# Narisi premaknjeno ref tocko
-	if refTocka is not None and w11Var.get():
-		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
+	# Ce smo v nacinu poljubne tocke
+	elif nacinVodenja == "poljubnaTocka":
+		if zadnjaRefTockaZaPremik is None:
+			zadnjaRefTockaZaPremik = refTocka
+		refTocka = zadnjaRefTockaZaPremik
 	
 	# Najde vrhove robotov
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
@@ -214,14 +214,16 @@ while(cap.isOpened() and not koncajProgram):
 
 		# Najde elipso plosce
 		ploscaCenter, (MA, ma), kot = phantomVrhovi.elipsa(vrhovi, slikaOrg, True)
+
 		# Rise elipso plosce
 		if w14Var.get():
 			cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
 		# Rise center plosce
-		if w15Var.get() and (nacinVodenja == "trajektorija" or nacinVodenja == "poljubnaTocka"):
-			cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15, 2)
+		if w15Var.get():
+			cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 13, 2)
 
+		# Ce smo v nacinu vodenja v center dolocimo ref v centru
 		if nacinVodenja == "center":
 			refTocka = ploscaCenter
 
@@ -251,6 +253,11 @@ while(cap.isOpened() and not koncajProgram):
 
 			# Poslji na simulink
 			Simulink.poslji(napaka[0], napaka[1], nagib)
+			
+
+		# Narisi premaknjeno ref tocko
+		if refTocka is not None and w11Var.get():
+			cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
 
 		# Risanje sledi krogle
 		if w9Var.get():
@@ -262,8 +269,8 @@ while(cap.isOpened() and not koncajProgram):
 					cv.line(slika, seznamTock[i], seznamTock[i+1], (204,102,0))
 				while len(seznamTock) >= stTock:
 					seznamTock.pop(0)
+
 	# Risi po sliki
-	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	if nacinVodenja == "trajektorija":
 		 cv.putText(slika, "Vodenje po trajektoriji", (10, 40), 4, 0.5, (255, 255, 255))
 	if nacinVodenja == "center":

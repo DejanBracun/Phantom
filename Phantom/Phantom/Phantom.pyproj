@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>Phantom</Name>
     <RootNamespace>Phantom</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

@@ -4,7 +4,7 @@ import operator
 from itertools import combinations
 
 # Ali rise maske, tocke, itd.?
-debug = False
+debug = True
 
 # Hrani zadnjo sredino plosce
 sredinaPrej = None
