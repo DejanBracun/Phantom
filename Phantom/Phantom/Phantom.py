@@ -55,7 +55,7 @@ def button_klik_poljubnoSredisce():
 	nacinVodenja = "poljubnaTocka"
 
 masterGui = Tk()
-masterGui.geometry('%dx%d+%d+%d' % (600, 400, 0, 0))
+masterGui.geometry('%dx%d+%d+%d' % (600, 550, 0, 0))
 w1 = Scale(masterGui, from_=0, to=25, resolution=0.1, command=show_values, orient=HORIZONTAL, width=40, length=1000)
 w1.pack()
 w1.set(P)
@@ -74,6 +74,20 @@ w8 = Button(masterGui, text = "Poljubna tocka", command = button_klik_poljubnoSr
 w5.pack()
 w7.pack()
 w8.pack()
+w9Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje sledi", variable = w9Var).pack()
+w10Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje trajektorije", variable = w10Var).pack()
+w11Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje referencne tocke", variable = w11Var).pack()
+w12Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje kroge", variable = w12Var).pack()
+w13Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje vrhov", variable = w13Var).pack()
+w14Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje elipse plosce", variable = w14Var).pack()
+w15Var = BooleanVar()
+Checkbutton(masterGui, text = "Risanje centera plosce", variable = w15Var).pack()
 # endregion
 
 posPrejZoga = np.array((0,0), dtype=np.float)
@@ -147,12 +161,12 @@ def onMouse(event, x, y, flags, param):
 	print("{x: %3d, y: %3d} {b: %3d, g: %3d, r: %3d} {h: %3d, s: %3d, v: %3d}" % (x, y, b, g, r, h, s, v))
 	if event == cv.EVENT_LBUTTONUP:
 		zadnjaRefTockaZaPremik = [x, y]
-
+	return
 
 # Initializacija kamere
 cap = cv.VideoCapture(1)
-#cap.set(cv.CAP_PROP_EXPOSURE, 0)
 cap.set(cv.CAP_PROP_AUTOFOCUS, 0)
+#cap.set(cv.CAP_PROP_EXPOSURE, 0)
 
 # Za posnet video
 snemaj = False
@@ -162,48 +176,69 @@ if snemaj: video = ShraniVideo("Test video")
 FPS = FPS()
 #FPS.NastaviZeljeniFPS(30)
 
+# Za risanje sledi krogle
+seznamTock = []
+stTock = 10
+
 while(cap.isOpened() and not koncajProgram):
 
     # GUI
-	masterGui.update()
+	try:
+		masterGui.update()
+	except:
+		break
 
-	ret, slikaOrg = cap.read() # Vrne sliko iz kamere
+	# Zajemi sliko kamere
+	_, slikaOrg = cap.read()
 	slika = np.copy(slikaOrg)
 
-	# Za sprehod po trajektoriji
+	# Ce smo v nacinu za rajektorijo
 	if nacinVodenja == "trajektorija":
+
+		# Dobi naslednjo tocko
 		naslednjaIzTrajektorije = VrniNaslednjo()
 		if naslednjaIzTrajektorije is not None:
 			refTocka = np.flip(naslednjaIzTrajektorije)
-		slika[seznaTockTrajektorije[:,0],seznaTockTrajektorije[:,1],:] = [25, 230, 214]
+
+		# Risanje trajektorije
+		if w10Var.get():
+			slika[seznaTockTrajektorije[:,0],seznaTockTrajektorije[:,1],:] = [25, 230, 214]
 
 	# Narisi premaknjeno ref tocko
-	if refTocka is not None:
+	if refTocka is not None and w11Var.get():
 		cv.drawMarker(slika, tuple(refTocka), (200, 100, 255), cv.MARKER_TILTED_CROSS, 10, 2)
-		
+	
+	# Najde vrhove robotov
 	vrhovi = phantomVrhovi.najdiVrhe(slikaOrg, True)
 	if vrhovi is not None:
 
-		# Za elipso
+		# Najde elipso plosce
 		ploscaCenter, (MA, ma), kot = phantomVrhovi.elipsa(vrhovi, slikaOrg, True)
-		cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
+		# Rise elipso plosce
+		if w14Var.get():
+			cv.ellipse(slika, ploscaCenter, (MA, ma), kot, 0, 360, (255, 255, 255))
 
-		# Za center plosce
-		if refTocka is None:
-			cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15)
+		# Rise center plosce
+		if w15Var.get() and (nacinVodenja == "trajektorija" or nacinVodenja == "poljubnaTocka"):
+			cv.drawMarker(slika, ploscaCenter, (0, 255, 255), cv.MARKER_TILTED_CROSS, 15, 2)
 
-		# Za vrhove robotov
-		for v in vrhovi.astype(np.uint):
-			cv.drawMarker(slika, tuple(v), (255, 255, 0), cv.MARKER_TILTED_CROSS, 15)
+		if nacinVodenja == "center":
+			refTocka = ploscaCenter
+
+		# Rise vrhove robotov
+		if w13Var.get():
+			for v in vrhovi.astype(np.uint):
+				cv.drawMarker(slika, tuple(v), (255, 255, 0), cv.MARKER_TILTED_CROSS, 15, 2)
 
 		# Za kroglo
 		kroglaTocka, kroglaPolmer = krogla.vrniKroglo(slikaOrg, [ploscaCenter, (MA, ma), kot])
 		if kroglaTocka is not None:
 			# Narise kroglo
-			cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
-			
+			if w12Var.get():
+				cv.circle(slika, kroglaTocka, kroglaPolmer, (255, 0, 255), 2)
+
 			# Izracun normirane relativne pozicije krogle na plosci
-			pozicijaProcent, _ = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka, nacinVodenja == "trajektorija")
+			pozicijaProcent = relativnaPozicijaKrogle(kroglaTocka, (ploscaCenter, (MA, ma), kot), refTocka, nacinVodenja == "trajektorija")
 
 			# Nelinearizacija
 			#pp = np.abs(pozicijaProcent)
@@ -217,6 +252,16 @@ while(cap.isOpened() and not koncajProgram):
 			# Poslji na simulink
 			Simulink.poslji(napaka[0], napaka[1], nagib)
 
+		# Risanje sledi krogle
+		if w9Var.get():
+			seznamTock.append(kroglaTocka)
+			if len(seznamTock) >= 2:
+				for i in range(len(seznamTock) - 1):
+					if seznamTock[i+1] is None or seznamTock[i] is None:
+						continue
+					cv.line(slika, seznamTock[i], seznamTock[i+1], (204,102,0))
+				while len(seznamTock) >= stTock:
+					seznamTock.pop(0)
 	# Risi po sliki
 	cv.putText(slika, "Dvojni klik, da zapres", (10, 20), 4, 0.5, (255, 255, 255))
 	if nacinVodenja == "trajektorija":
