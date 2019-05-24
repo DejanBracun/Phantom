@@ -59,7 +59,6 @@ def narisanaTrajektorija(slika, elipsa, mode):
 	slika = slika.copy()
 	output = slika.copy()
 
-
 	# Maskiram izven plosce
 	slika *= cv.ellipse(np.zeros(slika.shape, dtype = np.uint8), elipsa[0], elipsa[1], elipsa[2], 0, 360, (1, 1, 1), -1)
 
@@ -67,13 +66,13 @@ def narisanaTrajektorija(slika, elipsa, mode):
 	blurred = cv.GaussianBlur(slika, (7, 7), 0)
 	hsv = cv.cvtColor(blurred, cv.COLOR_BGR2HSV)
 
-	Lower = (90, 10, 100)
-	Upper = (190, 250, 175)
+	Lower = (140, 30, 80)
+	Upper = (240, 150, 175)
 
 	#popravitev mej pri uint8 tipu (openCV)
 	if hsv.dtype == 'uint8' :
-		Lower = (90/2, 10, 80)
-		Upper = (190/2, 250, 175)
+		Lower = (70, 30, 80)
+		Upper = (120, 150, 175)
 
 	mask = cv.inRange(hsv, Lower, Upper)
 	kernel = np.ones((3, 3), np.uint8)

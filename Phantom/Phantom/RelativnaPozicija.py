@@ -6,6 +6,9 @@ debug = True
 cv.namedWindow("Relativna poz")
 cv.moveWindow("Relativna poz", 1240, 0)
 
+zacetniPremerKroga = 250
+premerKroga = zacetniPremerKroga
+
 def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False):
 	"""
 	Izracuna relativno pozicijo krogle na elipsi
@@ -13,8 +16,9 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False
 	elipsa - elipsa plosce
 	referenca - v katero tocko se zelim premaknit
 	"""
-	krogla = np.array(krogla)
+	global premerKroga
 
+	krogla = np.array(krogla)
 	ploscaCenter, (MA, ma), kot = elipsa
 	referenca = np.array(ploscaCenter)
 	referencaLokalna = np.array(referencaP)
@@ -34,7 +38,9 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False
 	# Maskiram notranji krog
 	if TrajektorijaMode:
 		maskaNotKroga = np.zeros([(d + obroba) * 2, (d + obroba) * 2], dtype = np.uint8)
-		cv.circle(maskaNotKroga, tuple(vrl), 70, 1, -1)
+		if premerKroga > 70:
+			premerKroga -= 1
+		cv.circle(maskaNotKroga, tuple(vrl), int(premerKroga), 1, -1)
 		maska *= maskaNotKroga
 
 	# vektor krogla referenca
@@ -54,7 +60,6 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False
 		if debug:
 			cv.circle(maska, tuple(vk), 2, 100, -1)
 			cv.circle(maska, tuple(robnaTocka), 5, 100)
-			#cv.line(maska, tuple(vk), tuple(referenca), 50)
 			cv.line(maska, tuple(vk), tuple(vrl), 50)
 			cv.imshow("Relativna poz", maska)
 
@@ -64,4 +69,10 @@ def relativnaPozicijaKrogle(krogla, elipsa, referencaP, TrajektorijaMode = False
 
 	return np.zeros(2)
 
-
+def resetirajPremerKroga():
+	"""
+	Povzroci, da se nitranji krog zacne zmanjsevati zacetniPremerKroga
+	Klici kadar najdes novo trajektorijo
+	"""
+	global premerKroga, zacetniPremerKroga
+	premerKroga = zacetniPremerKroga

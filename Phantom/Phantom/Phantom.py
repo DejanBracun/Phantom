@@ -8,6 +8,7 @@ from ShraniVideo import ShraniVideo
 import krogla
 import Simulink
 from RelativnaPozicija import relativnaPozicijaKrogle
+from RelativnaPozicija import resetirajPremerKroga
 from itertools import combinations
 from trajektorijaNaPlosci import narisanaTrajektorija, VrniNaslednjo
 import time
@@ -18,7 +19,7 @@ debug = False
 # za PID
 alpha = 0.15
 P = 18.0
-I = 0
+I = 0.2
 D = 3.9
 
 # region GUI
@@ -44,6 +45,7 @@ seznaTockTrajektorije = None
 def button_klik_traj():
 	global nacinVodenja, seznaTockTrajektorije
 	seznaTockTrajektorije = narisanaTrajektorija(slikaOrg, [ploscaCenter, (MA, ma), kot], 2)
+	resetirajPremerKroga()
 	nacinVodenja = "trajektorija"
 
 def button_klik_center():
